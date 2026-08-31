@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Unity.ProjectAuditor.Editor.Core;
 using Unity.VisualScripting;
+using UnityEditor.EditorTools;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.AI;
@@ -287,7 +288,7 @@ public class CellAutoCities : MonoBehaviour
     void CombineParkMeshes(Vector2Int idx, ref HashSet<Vector2Int> visited)
     {
         Stack<Vector2Int> toVisit = new();
-        List<Vector2Int> parkCells = new();
+        HashSet<Tuple<Vector2Int, Vector2Int>> connected = new();
 
         Vector2Int [] moves =  
         {
@@ -296,6 +297,9 @@ public class CellAutoCities : MonoBehaviour
             Vector2Int.up,
             Vector2Int.down
         };
+
+        int parkIdx = parkManager.CreateNewPark();
+
 
         toVisit.Push(idx);
 
@@ -306,18 +310,42 @@ public class CellAutoCities : MonoBehaviour
             if (city[to.x, to.y].type != blockType.PARK) continue;
 
 
-            parkCells.Add(to);
             visited.Add(to);
 
-
+            // TODO: Make generation more readable and add functionality for 8 surrounding tiles
+            bool up = false;
+            bool down = false;
+            bool left = false;
+            bool right = false;
             foreach (var move in moves)
-            {
+            {   
                 if (!inbounds(to + move)) continue;
-                toVisit.Push(to + move);          
+                if (city[to.x + move.x, to.y + move.y].type != blockType.PARK) continue;
+
+                toVisit.Push(to + move);
+
+                if (!connected.Contains(new(to, to + move)) && !connected.Contains(new(to + move, to))) connected.Add(new (to, to + move));
+
+                if      (move == Vector2Int.left)    up = true;            
+                else if (move == Vector2Int.right)  down = true;    
+                else if (move == Vector2Int.down)  left = true;    
+                else if (move == Vector2Int.up) right = true;     
             }
+
+            var diagMove = Vector2Int.right + Vector2Int.down;
+            if (right && down && !connected.Contains(new(to, to + diagMove)) && !connected.Contains(new(to + diagMove, to)))
+            {
+                connected.Add(new (to, to + diagMove));
+            }
+
+            parkManager.AddParkBlock(parkIdx, to, left, right, up, down);
+            
+
+
+            
         }
 
-        parkManager.addPark(parkCells);
+        parkManager.SetConnected(parkIdx, connected);
 
     }
 
@@ -331,6 +359,11 @@ public class CellAutoCities : MonoBehaviour
     {
         return  (cell.x >= 0 && cell.x < rows) && 
                 (cell.y >= 0 && cell.y < cols);
+    }
+
+    bool IsPark(Vector2Int cell)
+    {
+        return city[cell.x, cell.y].type == blockType.PARK;
     }
 
 

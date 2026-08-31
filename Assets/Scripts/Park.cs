@@ -16,20 +16,20 @@ public class Park
     int vertPointer = 0;
 
     Dictionary<Vector2Int, int> topLeftIndex;
+    public HashSet<Tuple<Vector2Int, Vector2Int>> connected;
 
     
 
     public ParkManager parkManager;
     
-    public Park(List<Vector2Int> cells, ParkManager parkManager)
+    public Park(ParkManager parkManager)
     {
-        parkCells = cells;
-
-        foreach (var cell in parkCells) Debug.Log(cell);
+        parkCells = new();
 
         parkMesh = new Mesh();
         drawMesh = false;
 
+        vertPointer = 0;
         vertices = new();
         triangles = new();
         topLeftIndex = new();
@@ -40,27 +40,27 @@ public class Park
     void CreatePark()
     {  
         // TODO: Change with one method that finds all the parks and creates the vertexes and triangles at once
-        HashSet<Tuple<Vector2Int, Vector2Int>> connected = new();
-        HashSet<Tuple<Vector2Int, Vector2Int>> diagonal  = new();
+        // HashSet<Tuple<Vector2Int, Vector2Int>> connected = new();
+        // HashSet<Tuple<Vector2Int, Vector2Int>> diagonal  = new();
 
-        vertPointer = 0;
-        for (int i = 0; i < parkCells.Count; i++)
-        {   
-            Vector2Int cell = parkCells[i];
-            topLeftIndex.Add(cell, vertPointer);
+        // vertPointer = 0;
+        // for (int i = 0; i < parkCells.Count; i++)
+        // {   
+        //     Vector2Int cell = parkCells[i];
+        //     topLeftIndex.Add(cell, vertPointer);
 
-            Debug.Log("Creating park mesh for " + cell);
-            CreateOnePark(cell);
+        //     Debug.Log("Creating park mesh for " + cell);
+        //     CreateParkBlock(cell, new bool[]{false, false, false, false});
 
-            for (int j = i; j < parkCells.Count; j++)
-            {   
-                Vector2Int to = parkCells[j];
-                if (manhattanDist(cell, to) != 1) continue;
-                if (connected.Contains(new(cell, to)) || connected.Contains(new (to, cell)) ) continue;
+        //     for (int j = i; j < parkCells.Count; j++)
+        //     {   
+        //         Vector2Int to = parkCells[j];
+        //         if (manhattanDist(cell, to) != 1) continue;
+        //         if (connected.Contains(new(cell, to)) || connected.Contains(new (to, cell)) ) continue;
 
-                connected.Add(new(cell, to));
-            }
-        }
+        //         connected.Add(new(cell, to));
+        //     }
+        // }
 
         foreach(var pair in connected)
         {
@@ -73,7 +73,7 @@ public class Park
                 to   = pair.Item1;
             }
 
-            JoinParks(from, to);
+            if (manhattanDist(from, to) == 1) JoinParks(from, to);
         }
 
         
@@ -97,8 +97,12 @@ public class Park
     }
 
 
-    void CreateOnePark(Vector2Int start)
+    public void CreateParkBlock(Vector2Int start, bool left, bool right, bool up, bool down)
     {   
+        parkCells.Add(start);
+        topLeftIndex.Add(start, vertPointer);
+
+        LogParkBlockFlags(start, left, right, up, down);
 
         float bdSize = parkManager.buildingSize;
         float unitSize = parkManager.unitSize;
@@ -111,19 +115,26 @@ public class Park
         float startX = (start.y * unitSize) - bdSize / 2f;
         float startZ = -((start.x * unitSize) - bdSize / 2f); // Negative because we want rows to go down
         float startY = parkManager.defaultY;
+
+
+        
         
 
         // n vertexes mean n-1 segments of equal length between each vertex, 
         // because for the first segment 2 verteces are needed
         float offset = totalLength / (vertexPerPark - 1);
 
-        Debug.Log("offset: " + offset);
-        
+    
         for (int i = 0; i < vertexPerPark; i++)
         {
             for (int j = 0; j < vertexPerPark; j++)
             {   
-                float randomY = GetRandomNoiseHeight(startX + (offset * j), startZ - (offset * i));
+                
+                float randomY;
+                if ((i == 0 && !up) || (i == vertexPerPark-1 && !down) || (j == 0 && !left) || (j == vertexPerPark-1 && !right)) randomY = startY;
+                else randomY = GetRandomNoiseHeight(startX + (offset * j), startZ - (offset * i));
+                //
+
                 vertices.Add(new(startX + (offset * j), randomY, startZ - (offset * i)));
 
 
@@ -144,6 +155,13 @@ public class Park
         } 
     }
 
+    void LogParkBlockFlags(Vector2Int start, bool left, bool right, bool up, bool down)
+    {
+        Debug.Log(
+            $"Park start vertex: {start} | left={left} | right={right} | up={up} | down={down}"
+        );
+    }
+
     void JoinParks(Vector2Int from, Vector2Int to)
     {
         float bdSize = parkManager.buildingSize;
@@ -159,7 +177,7 @@ public class Park
         int vertexPointerTo   = topLeftIndex[to];
 
 
-        // TODO: If the road gets wider, there may be a need for added vertexes in between
+        // NOTE: If the road gets wider, there may be a need for added vertexes in between
         if (goingRight) 
         {
             vertexPointerFrom += vertexPerPark - 1;
@@ -216,7 +234,7 @@ public class Park
 
     float GetRandomNoiseHeight(float x, float z)
     {
-        return Mathf.PerlinNoise(x, z) * parkManager.heightIncrease;
+        return (Mathf.PerlinNoise(x, z) - 0.5f) * parkManager.heightIncrease;
     }
 
 }
