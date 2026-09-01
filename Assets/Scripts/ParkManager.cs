@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework.Internal;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class ParkManager : MonoBehaviour
 {   
@@ -11,7 +8,7 @@ public class ParkManager : MonoBehaviour
     public float unitSize;
     public float defaultY;
     public int verticesPerPark = 10;
-    public float heightIncrease = 1f;
+    public float heightScale = 1f;
     public Material mat;
     List<Park> parks;
 
@@ -25,8 +22,9 @@ public class ParkManager : MonoBehaviour
         this.defaultY = defaultY;
     }
 
-    void Update()
-    {   
+    
+    public void DrawParkMeshes()
+    {
         foreach (var pk in parks) pk.DrawParkMesh(mat, transform.localToWorldMatrix);  
     }
 

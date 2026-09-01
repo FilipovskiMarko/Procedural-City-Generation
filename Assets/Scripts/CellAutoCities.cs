@@ -1,14 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using NUnit.Framework;
-using Unity.ProjectAuditor.Editor.Core;
-using Unity.VisualScripting;
-using UnityEditor.EditorTools;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 public class CellAutoCities : MonoBehaviour
@@ -17,12 +9,14 @@ public class CellAutoCities : MonoBehaviour
     [SerializeField] int rows;
     [SerializeField] int cols;
     [SerializeField] GameObject building;
-    [SerializeField] GameObject park;
+    [SerializeField] GameObject crossroad;
     [SerializeField] GameObject road;
     float bdSize;
     float unitSize;
     float unitHeight;
     float roadSize;
+    bool drawCity = false;
+    [SerializeField] static float roadWidth = 0.1f;
 
     enum blockType {
         EMPTY,
@@ -95,18 +89,30 @@ public class CellAutoCities : MonoBehaviour
             this.downRoad = null;
         }
 
-        public void createRoads(int zOff, int xOff, GameObject road, float unitSize, Transform parent)
-        {
+        public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitSize, Transform parent)
+        {   
+            // TODO: Simplify scaling issue, i don't know why the size is so small
+            Vector3 scale = new Vector3(roadWidth / 10f, 1, roadWidth);
+
             if (hasRoadDown)
             {
                 Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.left * unitSize / 2f);
-                downRoad = Instantiate(road, parent.position + offset, Quaternion.identity, parent);
+                roadManager.AddRoad(parent.position + offset, Quaternion.identity, scale);
             }
             if (hasRoadRight)
             {
                 Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.forward * unitSize / 2f);
-                rightRoad = Instantiate(road, parent.position + offset, Quaternion.Euler(0, 90, 0), parent);
+                roadManager.AddRoad(parent.position + offset, Quaternion.Euler(0, 90, 0), scale);
+
             }
+        }
+
+        public void CreateCrossroad(int zOff, int xOff, RoadManager roadManager, float unitSize, Transform parent)
+        {   
+            Vector3 scale = new Vector3(roadWidth / 10f, 1, roadWidth / 10f);
+            Vector3 offset = new Vector3((xOff - 0.5f) * unitSize, 0, (-zOff + 0.5f) * unitSize);
+
+            roadManager.AddCrossroad(parent.position + offset, Quaternion.identity, scale);
         }
 
         public void Reinitialize()
@@ -123,6 +129,7 @@ public class CellAutoCities : MonoBehaviour
     Crossroad [,] crossroads;
 
     [SerializeField] ParkManager parkManager;
+    [SerializeField] RoadManager roadManager;
     static System.Random rand = new System.Random(seed);
     [SerializeField] InputAction restartAction;
 
@@ -135,6 +142,9 @@ public class CellAutoCities : MonoBehaviour
     };
     void Start()
     {   
+        // Stop Drawing city if reseting, so that the meshes don't get drawn while they are being destroyed and recreated
+        drawCity = false;
+
         // Create Arrays that store city objects  
         crossroads = new Crossroad[rows + 1, cols + 1]; // 
         city = new Block[rows, cols];
@@ -145,16 +155,19 @@ public class CellAutoCities : MonoBehaviour
         roadSize = road.GetComponent<MeshRenderer>().bounds.size.x;
 
         // Each block will be slightly larger than the buildings, to make room for the roads
-        unitSize = bdSize * 1.1f;
+        unitSize = bdSize + roadWidth;
 
-        // Init park manager default values
+        // Init park and road manager default values
         parkManager.Init(bdSize, unitSize, transform.position.y);
+        roadManager.Init();
         
         
         // Create the city
         InitBuildings();
         InitRoads();
         CreateCity();
+
+        drawCity = true;
     }
 
     void Initialize()
@@ -218,25 +231,21 @@ public class CellAutoCities : MonoBehaviour
             for (int j = 0; j < cols + 1; j++)
             {   
 
-                crossroads[i, j] = new Crossroad(true);
-                
-                int idx_i = Mathf.Clamp(i , 0,  rows - 1);
-                int idx_j = Mathf.Clamp(j , 0,  cols - 1);
+                crossroads[i, j] = new Crossroad(true);    
 
-                if (j == cols) crossroads[i, j].hasRoadRight = false;
-                if (i == rows) crossroads[i, j].hasRoadDown = false;
+                if (j == cols) { crossroads[i, j].hasRoadRight = false;}
+                if (i == rows) { crossroads[i, j].hasRoadDown  = false;}
+
+                if (i == cols || j == rows) continue;
                 
-                if (city[idx_i, idx_j].type != blockType.BUILDING)
+                if (city[i, j].type != blockType.BUILDING)
                 {   
-                    if (j == cols) { crossroads[i, j].hasRoadDown = false;  continue; }
-                    if (i == rows) { crossroads[i, j].hasRoadRight = false; continue; }
+                    crossroads[i, j].hasBuilding = false;
 
-                    
-                    if (!inbounds(i, j - 1) || city[i, j - 1].type != blockType.BUILDING) crossroads[i, j].hasRoadDown = false;
-                    if (!inbounds(i - 1, j) || city[i - 1, j].type != blockType.BUILDING) crossroads[i, j].hasRoadRight = false;
-                    if (!inbounds(i, j + 1) || city[i, j + 1].type != blockType.BUILDING) crossroads[i, j + 1].hasRoadDown = false;
-                    if (!inbounds(i + 1, j) || city[i + 1, j].type != blockType.BUILDING) crossroads[i + 1, j].hasRoadRight = false;
-                    
+                    if (Inbounds(i, j - 1) && !IsBuilding(i, j - 1)) crossroads[i, j].hasRoadDown = false;
+                    if (Inbounds(i - 1, j) && !IsBuilding(i - 1, j)) crossroads[i, j].hasRoadRight = false;
+                    if (Inbounds(i, j + 1) && !IsBuilding(i, j + 1)) crossroads[i, j + 1].hasRoadDown = false;
+                    if (Inbounds(i + 1, j) && !IsBuilding(i + 1, j)) crossroads[i + 1, j].hasRoadRight = false;
                 }
             }
         }
@@ -257,10 +266,10 @@ public class CellAutoCities : MonoBehaviour
         for (int i = 0; i < rows + 1; i++){
             for (int j = 0; j < cols + 1; j++)
             {    
-                crossroads[i,j].createRoads(i, j, road, unitSize, transform);
+                crossroads[i,j].CreateRoads(i, j, roadManager, unitSize, transform);
+                crossroads[i,j].CreateCrossroad(i, j, roadManager, unitSize, transform);
             }
         }
-
     }
 
     void SearchAndCombineParks()
@@ -325,13 +334,15 @@ public class CellAutoCities : MonoBehaviour
             foreach (var move in moves4dir)
             {   
                 var neighbor = to + move;
-                if (!inbounds(neighbor) || !IsPark(neighbor) || visited.Contains(neighbor)) continue;
-
-                toVisit.Push(neighbor);
-                visited.Add(neighbor);
+                if (!Inbounds(neighbor) || !IsPark(neighbor)) continue;
 
                 if (!connected.Contains(new(to, neighbor)) && !connected.Contains(new(neighbor, to))) {
                     connected.Add(new (to, neighbor));   
+                }
+
+                if (!visited.Contains(neighbor)) {
+                    toVisit.Push(neighbor);
+                    visited.Add(neighbor);
                 }
             }
 
@@ -339,7 +350,7 @@ public class CellAutoCities : MonoBehaviour
             for (int i = 0; i < moves8dir.Length; i++)
             {
                 var move = moves8dir[i];
-                if (!inbounds(to + move) || !IsPark(to + move)) continue;
+                if (!Inbounds(to + move) || !IsPark(to + move)) continue;
 
                 hasPark[i] = true;
             }
@@ -366,13 +377,13 @@ public class CellAutoCities : MonoBehaviour
         parkManager.SetConnected(parkIdx, connected);
     }
 
-    bool inbounds(int i, int j)
+    bool Inbounds(int i, int j)
     {
         return  (i >= 0 && i < rows) && 
                 (j >= 0 && j < cols);
     }
 
-    bool inbounds(Vector2Int cell)
+    bool Inbounds(Vector2Int cell)
     {
         return  (cell.x >= 0 && cell.x < rows) && 
                 (cell.y >= 0 && cell.y < cols);
@@ -382,6 +393,26 @@ public class CellAutoCities : MonoBehaviour
     {
         return city[cell.x, cell.y].type == blockType.PARK;
     }
+
+    bool IsBuilding(Vector2Int cell)
+    {
+        return city[cell.x, cell.y].type == blockType.BUILDING;
+    }
+
+    bool IsBuilding(int i, int j)
+    {
+        return city[i, j].type == blockType.BUILDING;
+    }
+
+    void Update()
+    {   
+        if (drawCity)
+        {
+            parkManager.DrawParkMeshes();
+            roadManager.DrawRoads();
+        }
+    }
+    
 
 
     void Restart(InputAction.CallbackContext inputAction)

@@ -280,9 +280,10 @@ MonoBehaviour:
   rows: 10
   cols: 10
   building: {fileID: 351069332505971880, guid: cdfcd01c03d58c78ab4c6ec94708fe02, type: 3}
-  park: {fileID: 8405261456334515622, guid: 8598ced625dedf809ae9a03eb3972753, type: 3}
+  crossroad: {fileID: 7859417379446027508, guid: 5269a9ebfe895f07589a9a1d63eb2269, type: 3}
   road: {fileID: 1114738830901394891, guid: 9e88bc8d9b5a29cdebec22d9e2a313fe, type: 3}
   parkManager: {fileID: 817071420}
+  roadManager: {fileID: 1502089342}
   restartAction:
     m_Name: Restart
     m_Type: 0
@@ -401,12 +402,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08f95e3de04364619ae55fbfc8d9e7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParkManager
-  cellAuto: {fileID: 0}
   buildingSize: 0
   unitSize: 0
   defaultY: 0
   verticesPerPark: 11
-  heightIncrease: 1
+  heightScale: 1
   mat: {fileID: 2100000, guid: 7ce9264f9bd5a6f36a8dec196ee5fb55, type: 2}
 --- !u!4 &817071421
 Transform:
@@ -560,6 +560,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!1 &1502089341
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1502089343}
+  - component: {fileID: 1502089342}
+  m_Layer: 0
+  m_Name: RoadManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1502089342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1502089341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f1f7e040dbd27513b7796f5d3e03e49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoadManager
+  roadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+  crossroadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+  roadMat: {fileID: 2100000, guid: 64a5a5707875ac849af6c800b469a980, type: 2}
+  crossroadMat: {fileID: 2100000, guid: 64a5a5707875ac849af6c800b469a980, type: 2}
+  drawMeshes: 0
+--- !u!4 &1502089343
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1502089341}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.45458, y: 0.16031, z: -6.33771}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -568,3 +617,4 @@ SceneRoots:
   - {fileID: 203844589}
   - {fileID: 664978098}
   - {fileID: 817071421}
+  - {fileID: 1502089343}

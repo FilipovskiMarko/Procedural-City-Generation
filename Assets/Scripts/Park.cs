@@ -249,7 +249,7 @@ public class Park
 
     float GetRandomNoiseHeight(float x, float z)
     {
-        return (Mathf.PerlinNoise(x, z) - 0.5f) * parkManager.heightIncrease;
+        return (Mathf.PerlinNoise(x, z) - 0.3f) * parkManager.heightScale;
     }
 
 }
