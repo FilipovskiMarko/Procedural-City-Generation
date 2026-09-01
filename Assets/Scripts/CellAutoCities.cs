@@ -290,63 +290,80 @@ public class CellAutoCities : MonoBehaviour
         Stack<Vector2Int> toVisit = new();
         HashSet<Tuple<Vector2Int, Vector2Int>> connected = new();
 
-        Vector2Int [] moves =  
+        // up, right, down, left
+        Vector2Int [] moves4dir =  
         {
             Vector2Int.left,
-            Vector2Int.right,
             Vector2Int.up,
+            Vector2Int.right,
             Vector2Int.down
+        };
+
+        // up, right, down, left, up-right, down-right, down-left, up-left
+        Vector2Int [] moves8dir =  
+        {
+            Vector2Int.left,
+            Vector2Int.up,
+            Vector2Int.right,
+            Vector2Int.down,
+            Vector2Int.left + Vector2Int.up,
+            Vector2Int.right + Vector2Int.up,
+            Vector2Int.right + Vector2Int.down,
+            Vector2Int.left + Vector2Int.down,
         };
 
         int parkIdx = parkManager.CreateNewPark();
 
 
         toVisit.Push(idx);
+        visited.Add(idx);
 
         while (toVisit.Count != 0)
         {
-            Vector2Int to = toVisit.Pop();
-            if (visited.Contains(to)) continue;
-            if (city[to.x, to.y].type != blockType.PARK) continue;
-
-
-            visited.Add(to);
-
-            // TODO: Make generation more readable and add functionality for 8 surrounding tiles
-            bool up = false;
-            bool down = false;
-            bool left = false;
-            bool right = false;
-            foreach (var move in moves)
+            var to = toVisit.Pop();
+            
+            foreach (var move in moves4dir)
             {   
-                if (!inbounds(to + move)) continue;
-                if (city[to.x + move.x, to.y + move.y].type != blockType.PARK) continue;
+                var neighbor = to + move;
+                if (!inbounds(neighbor) || !IsPark(neighbor) || visited.Contains(neighbor)) continue;
 
-                toVisit.Push(to + move);
+                toVisit.Push(neighbor);
+                visited.Add(neighbor);
 
-                if (!connected.Contains(new(to, to + move)) && !connected.Contains(new(to + move, to))) connected.Add(new (to, to + move));
-
-                if      (move == Vector2Int.left)    up = true;            
-                else if (move == Vector2Int.right)  down = true;    
-                else if (move == Vector2Int.down)  left = true;    
-                else if (move == Vector2Int.up) right = true;     
+                if (!connected.Contains(new(to, neighbor)) && !connected.Contains(new(neighbor, to))) {
+                    connected.Add(new (to, neighbor));   
+                }
             }
 
-            var diagMove = Vector2Int.right + Vector2Int.down;
-            if (right && down && !connected.Contains(new(to, to + diagMove)) && !connected.Contains(new(to + diagMove, to)))
+            bool [] hasPark = new bool[8];
+            for (int i = 0; i < moves8dir.Length; i++)
             {
-                connected.Add(new (to, to + diagMove));
+                var move = moves8dir[i];
+                if (!inbounds(to + move) || !IsPark(to + move)) continue;
+
+                hasPark[i] = true;
             }
-
-            parkManager.AddParkBlock(parkIdx, to, left, right, up, down);
+            
+            // Finaly add the park block to the park manager, which will create the mesh for it
+            parkManager.AddParkBlock(parkIdx, to, hasPark);
             
 
+            // Only need to check the diagonal direction that is down and right, 
+            // since the other 3 directions will be checked when the other cells are visited
+            var diagNeighbor = to + new Vector2Int(1, 1);
 
-            
+            // has park down, right, and down-right
+            bool isValid = hasPark[1] && hasPark[2] && hasPark[5];
+
+            if (isValid && !connected.Contains(new(to, diagNeighbor)) && 
+                           !connected.Contains(new(diagNeighbor, to)))
+            {
+                connected.Add(new (to, diagNeighbor));
+            } 
         }
-
+        // Set the connected park blocks for the park, 
+        // so that when the mesh is created, it will know which edges/corners to connect to other parks
         parkManager.SetConnected(parkIdx, connected);
-
     }
 
     bool inbounds(int i, int j)
