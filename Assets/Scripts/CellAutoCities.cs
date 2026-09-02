@@ -70,7 +70,7 @@ public class CellAutoCities : MonoBehaviour
     Block [,] city;
     struct Crossroad
     {
-        public bool hasBuilding;
+        public bool hasCrossroad;
         public bool hasRoadDown; 
         public bool hasRoadRight;
 
@@ -78,11 +78,11 @@ public class CellAutoCities : MonoBehaviour
         GameObject downRoad;
         GameObject rightRoad;
         
-        public Crossroad(bool hasBuilding)
+        public Crossroad(bool hasCrossroad)
         {
             this.hasRoadDown = true;
             this.hasRoadRight = true;
-            this.hasBuilding = hasBuilding;
+            this.hasCrossroad = true;
 
             this.crossroad = null;
             this.rightRoad = null;
@@ -109,6 +109,8 @@ public class CellAutoCities : MonoBehaviour
 
         public void CreateCrossroad(int zOff, int xOff, RoadManager roadManager, float unitSize, Transform parent)
         {   
+            if (!hasCrossroad) return;
+            
             Vector3 scale = new Vector3(roadWidth / 10f, 1, roadWidth / 10f);
             Vector3 offset = new Vector3((xOff - 0.5f) * unitSize, 0, (-zOff + 0.5f) * unitSize);
 
@@ -240,12 +242,17 @@ public class CellAutoCities : MonoBehaviour
                 
                 if (city[i, j].type != blockType.BUILDING)
                 {   
-                    crossroads[i, j].hasBuilding = false;
+                    if (InboundsCity(i, j - 1) && !IsBuilding(i, j - 1)) crossroads[i, j].hasRoadDown = false;
+                    if (InboundsCity(i - 1, j) && !IsBuilding(i - 1, j)) crossroads[i, j].hasRoadRight = false;
+                    
 
-                    if (Inbounds(i, j - 1) && !IsBuilding(i, j - 1)) crossroads[i, j].hasRoadDown = false;
-                    if (Inbounds(i - 1, j) && !IsBuilding(i - 1, j)) crossroads[i, j].hasRoadRight = false;
-                    if (Inbounds(i, j + 1) && !IsBuilding(i, j + 1)) crossroads[i, j + 1].hasRoadDown = false;
-                    if (Inbounds(i + 1, j) && !IsBuilding(i + 1, j)) crossroads[i + 1, j].hasRoadRight = false;
+                    // Could be replaced with a binary system that also gives information
+                    // On the direction of the crossroad, but for now we will just check if the crossroad is valid or not
+                    if (InboundsCity(i - 1, j) && InboundsCity(i, j - 1) &&
+                        !crossroads[i - 1, j].hasRoadDown && !crossroads[i, j - 1].hasRoadRight)
+                    {
+                        crossroads[i, j].hasCrossroad = false;
+                    }
                 }
             }
         }
@@ -334,7 +341,7 @@ public class CellAutoCities : MonoBehaviour
             foreach (var move in moves4dir)
             {   
                 var neighbor = to + move;
-                if (!Inbounds(neighbor) || !IsPark(neighbor)) continue;
+                if (!InboundsCity(neighbor) || !IsPark(neighbor)) continue;
 
                 if (!connected.Contains(new(to, neighbor)) && !connected.Contains(new(neighbor, to))) {
                     connected.Add(new (to, neighbor));   
@@ -350,7 +357,7 @@ public class CellAutoCities : MonoBehaviour
             for (int i = 0; i < moves8dir.Length; i++)
             {
                 var move = moves8dir[i];
-                if (!Inbounds(to + move) || !IsPark(to + move)) continue;
+                if (!InboundsCity(to + move) || !IsPark(to + move)) continue;
 
                 hasPark[i] = true;
             }
@@ -377,13 +384,13 @@ public class CellAutoCities : MonoBehaviour
         parkManager.SetConnected(parkIdx, connected);
     }
 
-    bool Inbounds(int i, int j)
+    bool InboundsCity(int i, int j)
     {
         return  (i >= 0 && i < rows) && 
                 (j >= 0 && j < cols);
     }
 
-    bool Inbounds(Vector2Int cell)
+    bool InboundsCity(Vector2Int cell)
     {
         return  (cell.x >= 0 && cell.x < rows) && 
                 (cell.y >= 0 && cell.y < cols);

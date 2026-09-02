@@ -1,14 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using Unity.Collections;
-using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class L_Systems : MonoBehaviour
 {   
     // Variables:
@@ -24,18 +17,31 @@ public class L_Systems : MonoBehaviour
     public static int seed = 42;
     System.Random rand = new System.Random(seed);
 
-    [SerializeField] GameObject branch;
-    [SerializeField] GameObject leaf;
-    Vector3 pos;
-    Vector3 rot;
-    Vector3 size;
-    
+    [SerializeField] Mesh branch;
+    [SerializeField] Mesh trunk;
+    [SerializeField] Material branchMaterial;
     [SerializeField] InputAction restartAction;
-    List<GameObject> objs;
+    [SerializeField] Transform pointer;
+    List<Matrix4x4> transformMatrices;
 
-    Stack<Vector3> Rotations;
-    Stack<Vector3> Positions;
-    Stack<Vector3> Sizes;
+    struct stateData
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 localScale;
+
+        public stateData(Vector3 pos, Quaternion rot, Vector3 scale)
+        {
+            position = pos;
+            rotation = rot;
+            localScale = scale;
+        }
+    }
+    Stack<stateData> pointerStack;
+
+
+    bool drawTree = false;
+
     int branchCount;
     float branchHeight;
 
@@ -45,15 +51,13 @@ public class L_Systems : MonoBehaviour
     [SerializeField] int generations = 2;
     [SerializeField] float rotationCoefficient = 25f;
     [SerializeField] float sizeCoefficient = 1.1f;
-    [SerializeField] bool randomRotation = false;
     static FractalPlant info = new(init: "X");
     Dictionary<char, string> rules;
     void Start()
     {   
-        objs = new List<GameObject>();
-        Positions = new Stack<Vector3>();
-        Rotations = new Stack<Vector3>();
-        Sizes     = new Stack<Vector3>();
+        drawTree = false;
+        transformMatrices = new List<Matrix4x4>();
+        pointerStack = new Stack<stateData>();
 
         if (!useCustomSettings)
         {   
@@ -66,23 +70,26 @@ public class L_Systems : MonoBehaviour
         rules = info.rules;
 
 
-        pos  = Vector3.zero;
-        rot  = Vector3.zero;
-        size = branch.GetComponentInChildren<MeshRenderer>().bounds.size * sizeCoefficient;
-        gameObject.GetComponent<MeshFilter>().sharedMesh = null;
-
-        generations = Mathf.Min(generations, 10);
-
+        pointer.position  = transform.position;
+        pointer.rotation  = transform.rotation;
+        pointer.localScale = transform.localScale;
 
         branchCount = 0;
-        branchHeight = size.y;
+        branchHeight = branch.bounds.size.z;
 
-
-        
+        Debug.Log($"Branch Height: {branchHeight * pointer.localScale.z}, Branch bound size: {branch.bounds.size}");
 
         PassGenerations();
         ReadString();
-        CombineMeshes();
+        drawTree = true;
+    }
+
+    void Update()
+    {   
+        if (drawTree)
+        {
+            Graphics.DrawMeshInstanced(branch, 0, branchMaterial, transformMatrices);
+        }
     }
 
     void ReadString()
@@ -97,12 +104,12 @@ public class L_Systems : MonoBehaviour
                 case ']': { Pop(); } break;
                 case '>': { OffsetRotation(0,  rotationCoefficient,  0); } break;
                 case '<': { OffsetRotation(0, -rotationCoefficient,  0); } break;
-                case '^': { OffsetRotation(0,   0, rotationCoefficient); } break;
-                case '&': { OffsetRotation(0,   0,-rotationCoefficient); } break;
+                case '^': { OffsetRotation( rotationCoefficient,   0, 0); } break;
+                case '&': { OffsetRotation(-rotationCoefficient,   0, 0); } break;
                 case '+': { ChangeSize(sizeCoefficient); } break;
                 case '-': { ChangeSize(1/sizeCoefficient); } break;
                        
-                default : { Debug.Log("Character: " + c + " not recognized!"); } break;
+                default : { Debug.Log($"Character: {c} not recognized!"); } break;
             }
         }
     }
@@ -118,6 +125,12 @@ public class L_Systems : MonoBehaviour
             }
 
             finalString = newString;
+
+            if (finalString.Length > 10000)
+            {
+                Debug.Log("Final string is too long, stopping at generation " + i);
+                break;
+            }
         }
     }
 
@@ -130,17 +143,12 @@ public class L_Systems : MonoBehaviour
 
     void CreateBranch()
     {
-        GameObject obj = Instantiate(branch, pos, Quaternion.Euler(rot), transform);
-        objs.Add(obj);
+        Matrix4x4 transformMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation, pointer.localScale);
+        transformMatrices.Add(transformMatrix);
 
-        obj.transform.localScale = size;
-        pos += obj.transform.up * 2 * size.y;
-
-        
+        pointer.Translate(Vector3.forward * branchHeight * pointer.localScale.z);
 
         branchCount++;  
- 
-   
     }
 
     void CreateLeaf()
@@ -148,83 +156,40 @@ public class L_Systems : MonoBehaviour
         CreateBranch();
 
         // GameObject lf = Instantiate(leaf, pos, Quaternion.Euler(rot), transform);
-        // objs.Add(lf);
+        // transformMatrices.Add(lf);
 
     }
 
     void Push()
     {
-        Positions.Push(pos);
-        Rotations.Push(rot);
-        Sizes.Push(size);
+        pointerStack.Push(new stateData(pointer.position, pointer.rotation, pointer.localScale));
     }
 
     void Pop()
     {
-        pos  = Positions.Pop();
-        rot  = Rotations.Pop();
-        size = Sizes.Pop();
+        stateData state = pointerStack.Pop();
+        pointer.position = state.position;
+        pointer.rotation = state.rotation;
+        pointer.localScale = state.localScale;
     }
 
     void OffsetRotation(float x, float y, float z)
     {   
+        Vector3 rot = pointer.rotation.eulerAngles;
         rot.x += x; rot.y += y; rot.z += z;
 
-        if (Positions.Count > 2)
-        {   
-            int min = -5; int max = 5;
-
-            rot.x += rand.Next(min, max);
-            rot.y += rand.Next(min, max);
-            rot.z += rand.Next(min, max);
-        }
+        pointer.rotation = Quaternion.Euler(rot);
     }
 
     void ChangeSize(float coef)
-    {
+    {   
+        Vector3 size = pointer.localScale;
         size *= coef;
-    }
-
-    void CombineMeshes()
-    {
-        MeshFilter [] meshFilters = GetComponentsInChildren<MeshFilter>();
-        CombineInstance [] instances = new CombineInstance[meshFilters.Length];
-
-        for (int i = 0; i < meshFilters.Length; i++)
-        {
-            var meshFilter = meshFilters[i];
-
-            instances[i] = new CombineInstance
-            {
-                mesh = meshFilter.sharedMesh,
-                transform = meshFilter.transform.localToWorldMatrix
-            };
-
-            meshFilter.gameObject.SetActive(false);
-        }
-
-        Mesh combinedMesh = new Mesh
-        {
-            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
-        };
-
-        combinedMesh.CombineMeshes(instances);
-        gameObject.GetComponent<MeshFilter>().sharedMesh = combinedMesh;
-        gameObject.SetActive(true);
-
-        foreach(GameObject obj in objs) Destroy(obj);
-
-        
-    }
-
-    void OnDestroy()
-    {
-        foreach (GameObject obj in objs) Destroy(obj);
+        pointer.localScale = size;
     }
 
     void Restart(InputAction.CallbackContext context)
     {
-        foreach (GameObject obj in objs) Destroy(obj);
         Start();
     }
 

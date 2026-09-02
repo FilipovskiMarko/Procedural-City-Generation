@@ -80,6 +80,29 @@ struct FractalPlant {
         }
 }
 
+struct TwoDBinaryTree {
+        public Dictionary<char, string> rules;
+
+        public string axiom;
+
+        public int generations;
+        public float sizeCoefficient;
+        public float rotationCoefficient;
+
+        public TwoDBinaryTree(string init = "FA")
+        {
+            axiom = "X";
+            generations = 4;
+            sizeCoefficient = 1.2f;
+            rotationCoefficient = 45f;
+            rules = new Dictionary<char, string>
+            {
+                {'F' , "FF"},
+                {'X' , "F-[^X]&X"}
+            };
+        }
+}
+
 // Binary 2D Tree
 // public static Dictionary<char, string> rules = new Dictionary<char, string>
 //     {
