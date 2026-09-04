@@ -7,14 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Grass
+  m_Name: Leaf
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 2100000, guid: 969135da7737d20a4892a40135c169b1, type: 2}
   m_ModifiedSerializedProperties: 4
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap:
@@ -27,10 +27,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Smoothness: 0.17
+    - _Smoothness: 0
     m_Colors:
-    - _BaseColor: {r: 0.15634197, g: 0.41865915, b: 0.15634198, a: 1}
-    - _Color: {r: 0.15634194, g: 0.41865912, b: 0.15634194, a: 1}
+    - _BaseColor: {r: 0.3573009, g: 0.6184969, b: 0.28214246, a: 1}
+    - _Color: {r: 0.35730088, g: 0.61849684, b: 0.28214243, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &7397079698616340267

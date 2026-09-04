@@ -2,85 +2,99 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+
+struct stateData
+{
+    public Vector3 position;
+    public Quaternion rotation;
+    public Vector3 localScale;
+
+    public stateData(Vector3 pos, Quaternion rot, Vector3 scale)
+    {
+        position = pos;
+        rotation = rot;
+        localScale = scale;
+    }
+}
 public class L_Systems : MonoBehaviour
 {   
-    // Variables:
-    // B -> branch
-    // L -> Leaf
-    // Constants:
-    // [ -> Push Pos and Rotation
-    // ] -> Pop  Pos and Rotation
-    // + -> Rotate 25 degrees cc-wise
-    // - -> Rotate 25 degrees cl-wise
-    // Rules:
-    // B -> BR
-    public static int seed = 42;
-    System.Random rand = new System.Random(seed);
-
+    [SerializeField] int seed = 42;
     [SerializeField] Mesh branch;
     [SerializeField] Mesh trunk;
+    [SerializeField] Mesh leaf;
     [SerializeField] Material branchMaterial;
-    [SerializeField] InputAction restartAction;
+    [SerializeField] Material leafMaterial;
     [SerializeField] Transform pointer;
-    List<Matrix4x4> transformMatrices;
-
-    struct stateData
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 localScale;
-
-        public stateData(Vector3 pos, Quaternion rot, Vector3 scale)
-        {
-            position = pos;
-            rotation = rot;
-            localScale = scale;
-        }
-    }
-    Stack<stateData> pointerStack;
-
-
-    bool drawTree = false;
-
-    int branchCount;
-    float branchHeight;
-
-    [SerializeField] string input; 
+    [SerializeField] InputAction restartAction;
+    [SerializeField] string axiom; 
     [SerializeField] string finalString;
     [SerializeField] bool useCustomSettings = false;
     [SerializeField] int generations = 2;
     [SerializeField] float rotationCoefficient = 25f;
     [SerializeField] float sizeCoefficient = 1.1f;
-    static FractalPlant info = new(init: "X");
-    Dictionary<char, string> rules;
+    [SerializeField] bool randomize = false;
+    [SerializeField] float randomRotationRange = 15f;
+    [SerializeField] float leafScale = 0.05f;
+    [SerializeField] float trunkScale = 1.5f;
+    
+    List<Matrix4x4> branchMatrices;
+    List<Matrix4x4> leafMatrices;
+    Matrix4x4 trunkMatrix;
+    Stack<stateData> pointerStack;
+
+    int branchCount;
+    float branchHeight;
+    float leafHeight;
+    bool drawTree = false;
+    static BasicTree info = new(init: "FA");
+    Dictionary<char, string[]> rules;
+
+    void Awake()
+    {
+        // Set the random seed for reproducibility
+        Random.InitState(seed);
+    }
     void Start()
     {   
+        // Stop Drawing the tree until it is fully generated
         drawTree = false;
-        transformMatrices = new List<Matrix4x4>();
+
+        // Initialize the branch and leaf matrices, trunk matrix, and pointer stack
+        branchMatrices = new List<Matrix4x4>();
+        leafMatrices = new List<Matrix4x4>();
+        trunkMatrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one * trunkScale);
         pointerStack = new Stack<stateData>();
 
+        // If not using custom settings, use the default settings from the info struct
         if (!useCustomSettings)
         {   
             generations = info.generations;
             rotationCoefficient = info.rotationCoefficient;
             sizeCoefficient = info.sizeCoefficient;
         }
-        input = info.axiom;
-        finalString = input;
+        axiom = info.axiom;
+        finalString = axiom;
         rules = info.rules;
 
+        // Reset the branch and leaf counts and heights
+        branchCount = 0;
+        branchHeight = branch.bounds.size.z;
+        leafHeight = leaf.bounds.size.z * leafScale;
 
+        // Set the pointer's position and rotation to the base of the trunk
         pointer.position  = transform.position;
         pointer.rotation  = transform.rotation;
         pointer.localScale = transform.localScale;
 
-        branchCount = 0;
-        branchHeight = branch.bounds.size.z;
+        // Get the height of the trunk band and move the pointer to the top of the trunk
+        float trunkHeight = trunk.bounds.size.z * trunkScale;
+        pointer.Translate(Vector3.forward * trunkHeight, Space.Self);
 
-        Debug.Log($"Branch Height: {branchHeight * pointer.localScale.z}, Branch bound size: {branch.bounds.size}");
-
+        // Generate the final string, and apply the transformations to create the tree
         PassGenerations();
         ReadString();
+
+        // Start drawing the tree
         drawTree = true;
     }
 
@@ -88,24 +102,38 @@ public class L_Systems : MonoBehaviour
     {   
         if (drawTree)
         {
-            Graphics.DrawMeshInstanced(branch, 0, branchMaterial, transformMatrices);
+            Graphics.DrawMeshInstanced(branch, 0, branchMaterial, branchMatrices);
+            Graphics.DrawMeshInstanced(leaf, 0, leafMaterial, leafMatrices);
+            Graphics.DrawMeshInstanced(trunk, 0, branchMaterial, new [] {trunkMatrix});
         }
     }
 
     void ReadString()
     {
+            // NOTE: Variables:
+            //  X -> branch
+            //  L -> Leaf
+            //  [ -> Push Pos and Rotation
+            //  ] -> Pop  Pos and Rotation
+            //  + -> Scale up by sizeCoefficient
+            //  - -> Scale down by sizeCoefficient
+            //  < -> Rotate left  (x-axis) by rotationCoefficient
+            //  > -> Rotate right (x-axis) by rotationCoefficient
+            //  ^ -> Rotate up    (y-axis) by rotationCoefficient
+            //  _ -> Rotate down  (y-axis) by rotationCoefficient
+            
         foreach (char c in finalString)
         {   
             switch (c)
             {
-                case 'F': { CreateBranch(); } break;
+                case 'L': { CreateLeaf(); } break;
                 case 'X': { CreateBranch(); } break;
                 case '[': { Push(); } break;
                 case ']': { Pop(); } break;
-                case '>': { OffsetRotation(0,  rotationCoefficient,  0); } break;
-                case '<': { OffsetRotation(0, -rotationCoefficient,  0); } break;
-                case '^': { OffsetRotation( rotationCoefficient,   0, 0); } break;
-                case '&': { OffsetRotation(-rotationCoefficient,   0, 0); } break;
+                case '_': { OffsetRotation(0,  rotationCoefficient,  0); } break;   
+                case '^': { OffsetRotation(0, -rotationCoefficient,  0); } break;   
+                case '>': { OffsetRotation( rotationCoefficient,   0, 0); } break;  
+                case '<': { OffsetRotation(-rotationCoefficient,   0, 0); } break;  
                 case '+': { ChangeSize(sizeCoefficient); } break;
                 case '-': { ChangeSize(1/sizeCoefficient); } break;
                        
@@ -126,7 +154,7 @@ public class L_Systems : MonoBehaviour
 
             finalString = newString;
 
-            if (finalString.Length > 10000)
+            if (finalString.Length > 50_000)
             {
                 Debug.Log("Final string is too long, stopping at generation " + i);
                 break;
@@ -136,15 +164,18 @@ public class L_Systems : MonoBehaviour
 
     string TransformChar(char c)
     {
-        if (rules.ContainsKey(c)) return rules[c];
-
+        if (rules.ContainsKey(c)) {
+            string result = rules[c][Random.Range(0, rules[c].Length)];
+            Debug.Log($"Transforming {c} to {result}");
+            return result;
+        }
         else return c.ToString();
     }
 
     void CreateBranch()
     {
         Matrix4x4 transformMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation, pointer.localScale);
-        transformMatrices.Add(transformMatrix);
+        branchMatrices.Add(transformMatrix);
 
         pointer.Translate(Vector3.forward * branchHeight * pointer.localScale.z);
 
@@ -153,11 +184,10 @@ public class L_Systems : MonoBehaviour
 
     void CreateLeaf()
     {   
-        CreateBranch();
+        Matrix4x4 leafMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation, Vector3.one * leafScale);
+        leafMatrices.Add(leafMatrix);
 
-        // GameObject lf = Instantiate(leaf, pos, Quaternion.Euler(rot), transform);
-        // transformMatrices.Add(lf);
-
+        pointer.Translate(Vector3.forward * leafHeight * pointer.localScale.z);
     }
 
     void Push()
@@ -174,18 +204,20 @@ public class L_Systems : MonoBehaviour
     }
 
     void OffsetRotation(float x, float y, float z)
-    {   
-        Vector3 rot = pointer.rotation.eulerAngles;
-        rot.x += x; rot.y += y; rot.z += z;
+    {  
+        if (randomize)
+        {
+            x += Random.Range(-randomRotationRange, randomRotationRange);
+            y += Random.Range(-randomRotationRange, randomRotationRange);
+            z += Random.Range(-randomRotationRange, randomRotationRange);
+        }
 
-        pointer.rotation = Quaternion.Euler(rot);
+        pointer.Rotate(x, y, z, Space.Self);
     }
 
     void ChangeSize(float coef)
     {   
-        Vector3 size = pointer.localScale;
-        size *= coef;
-        pointer.localScale = size;
+        pointer.localScale *= coef;
     }
 
     void Restart(InputAction.CallbackContext context)

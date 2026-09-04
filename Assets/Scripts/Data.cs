@@ -1,106 +1,137 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Data
+
+struct ThreeDTree
 {
-    
-    
+    public Dictionary<char, string> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
 
-
-}
-
-struct ThreeDTree {
-        public Dictionary<char, string> rules;
-
-        public string axiom;
-
-        public int generations;
-        public float sizeCoefficient;
-        public float rotationCoefficient;
-
-        public ThreeDTree(string init = "FA")
-        {
-            axiom = init;
-            generations = 10;
-            sizeCoefficient = 1.3f;
-            rotationCoefficient = 10f;
-            rules = new Dictionary<char, string>
+    public ThreeDTree(string init = "FA")
+    {
+        axiom = "FA";
+        generations = 10;
+        sizeCoefficient = 1.3f;
+        rotationCoefficient = 10f;
+        rules = new Dictionary<char, string>
             {
-                {'A' , "^FB>>B>>>>>B"},
-                {'B' , "[^^-F>>>>>>A]"}
+                {'A' , "^FB>B>>>B"},
+                {'B' , "[^^-F>>>A]"}
             };
-        }
-
-
+    }
 }
 
-struct ThreeDBinaryTree {
-        public Dictionary<char, string> rules;
+struct ThreeDBinaryTree
+{
+    public Dictionary<char, string> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
 
-        public string axiom;
-
-        public int generations;
-        public float sizeCoefficient;
-        public float rotationCoefficient;
-
-        public ThreeDBinaryTree(string init = "FA")
-        {
-            axiom = "X";
-            generations = 4;
-            sizeCoefficient = 1.2f;
-            rotationCoefficient = 45f;
-            rules = new Dictionary<char, string>
+    public ThreeDBinaryTree(string init = "FA")
+    {
+        axiom = "X";
+        generations = 4;
+        sizeCoefficient = 1.2f;
+        rotationCoefficient = 45f;
+        rules = new Dictionary<char, string>
             {
                 {'F' , "FF"},
-                {'X' , "F-[<[^X]&X]>[^X]&X"}
+                {'X' , "F-[^[>X]<X]&[>X]<X"}
             };
-        }
+    }
 }
 
-struct FractalPlant {
-        public Dictionary<char, string> rules;
+struct FractalPlant
+{
+    public Dictionary<char, string> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
 
-        public string axiom;
-
-        public int generations;
-        public float sizeCoefficient;
-        public float rotationCoefficient;
-
-        public FractalPlant(string init = "FA")
-        {
-            axiom = "X";
-            generations = 4;
-            sizeCoefficient = 1.5f;
-            rotationCoefficient = 20f;
-            rules = new Dictionary<char, string>
+    public FractalPlant(string init = "FA")
+    {
+        axiom = "X";
+        generations = 4;
+        sizeCoefficient = 1.5f;
+        rotationCoefficient = 20f;
+        rules = new Dictionary<char, string>
             {
                 {'F' , "FF"},
                 {'X' , "F-^[<[X]&X]&F[&FX][>[X]&X]&F[&FX]^X"}
             };
-        }
+    }
 }
 
-struct TwoDBinaryTree {
-        public Dictionary<char, string> rules;
+struct TwoDBinaryTree
+{
+    public Dictionary<char, string> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
 
-        public string axiom;
-
-        public int generations;
-        public float sizeCoefficient;
-        public float rotationCoefficient;
-
-        public TwoDBinaryTree(string init = "FA")
-        {
-            axiom = "X";
-            generations = 4;
-            sizeCoefficient = 1.2f;
-            rotationCoefficient = 45f;
-            rules = new Dictionary<char, string>
+    public TwoDBinaryTree(string init = "FA")
+    {
+        axiom = "X";
+        generations = 4;
+        sizeCoefficient = 1.2f;
+        rotationCoefficient = 45f;
+        rules = new Dictionary<char, string>
             {
                 {'F' , "FF"},
                 {'X' , "F-[^X]&X"}
             };
-        }
+    }
+}
+
+// Spiral Tree, for testing rotataion and scaling coefficients
+struct CurvyTree
+{
+    public Dictionary<char, string> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
+
+    public CurvyTree(string init = "FA")
+    {
+        axiom = "X";
+        generations = 4;
+        sizeCoefficient = 1.2f;
+        rotationCoefficient = 45f;
+        rules = new Dictionary<char, string>
+            {
+                {'X' , "X-^X"}
+            };
+    }
+}
+
+struct BasicTree
+{
+    public Dictionary<char, string []> rules;
+    public string axiom;
+    public int generations;
+    public float sizeCoefficient;
+    public float rotationCoefficient;
+
+    public BasicTree(string init = "FA")
+    {
+        axiom = "A";
+        generations = 8;
+        sizeCoefficient = 1.2f;
+        rotationCoefficient = 25;
+        rules = new Dictionary<char, string[]>
+            {   //"X[-<A]", "X->A"
+                {'A' , new[] {"XL-[-<A]>A", "XL-[<A]->A", "XL-[^A]-_A", "XL-[-^A]_A"}},
+                {'L' , new[] {""}}
+            };
+    }
 }
 
 // Binary 2D Tree
