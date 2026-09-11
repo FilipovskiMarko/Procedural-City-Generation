@@ -9,11 +9,10 @@ public class Park
     List<Vector3> vertices;
     List<int> triangles;
     bool drawMesh = false;
+    RenderParams renderParams;
     int vertPointer = 0;
     Dictionary<Vector2Int, int> topLeftIndex;
     public HashSet<Tuple<Vector2Int, Vector2Int>> connected;
-
-    
 
     public ParkManager parkManager;
     
@@ -30,6 +29,7 @@ public class Park
         topLeftIndex = new();
 
         this.parkManager = parkManager;
+        renderParams = new(parkManager.mat);
     }
 
     void CreatePark()
@@ -236,20 +236,22 @@ public class Park
     {   
         CreatePark();
         UpdateMesh();
-
     }
 
     public void DrawParkMesh(Material mat, Matrix4x4 matrix)
     {   
         if (!drawMesh) return;
-
-        RenderParams rp = new(mat);
-        Graphics.RenderMesh(rp, parkMesh, 0, matrix);
+        Graphics.RenderMesh(renderParams, parkMesh, 0, matrix);
     }
 
     float GetRandomNoiseHeight(float x, float z)
-    {
-        return (Mathf.PerlinNoise(x, z) - 0.3f) * parkManager.heightScale;
+    {   
+        float shift = parkManager.shift;
+
+        // Shift vals between -0.6 and 1.4
+        float randomHeight = (Mathf.PerlinNoise(x + shift, z + shift) - 0.3f) * 2f;
+        
+        return randomHeight * parkManager.heightScale;
     }
 
 }

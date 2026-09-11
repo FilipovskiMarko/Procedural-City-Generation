@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ParkManager : MonoBehaviour
 {   
+    public float shift;
     public float buildingSize;
     public float unitSize;
     public float defaultY;
@@ -16,6 +17,7 @@ public class ParkManager : MonoBehaviour
     public void Init(float buildingSize, float unitSize, float defaultY)
     {
         parks = new();
+        shift = UnityEngine.Random.value * 100f;
 
         this.buildingSize = buildingSize;
         this.unitSize = unitSize;

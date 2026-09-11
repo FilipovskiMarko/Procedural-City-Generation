@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,9 +9,9 @@ public class CellAutoCities : MonoBehaviour
     [SerializeField] static int seed = 42;
     [SerializeField] int rows;
     [SerializeField] int cols;
-    [SerializeField] GameObject building;
-    [SerializeField] GameObject crossroad;
-    [SerializeField] GameObject road;
+    [SerializeField] GameObject [] buildingPrefabs;
+
+    List<GameObject> objs;
     float bdSize;
     float unitSize;
     float unitHeight;
@@ -27,42 +28,37 @@ public class CellAutoCities : MonoBehaviour
     struct Block
     {   
         public blockType type;
-        public GameObject obj;
 
         public Block(blockType type)
         {   
             this.type = type;
-            obj = null;
         }
 
-        public void CreateBuilding(int zOff, int xOff, GameObject building, float size, float height, Transform parent)
+        public void CreateBuilding(int zOff, int xOff, GameObject building, float size, float height, Transform parent, List<GameObject> objs)
         {
-            // float randomHeight = Mathf.Abs(Mathf.PerlinNoise((float)i/rows, (float)j/cols));
-            float randomHeight = rand.Next(10, 100) / 100f * height;
-
             Vector3 offset = new Vector3(xOff * size, 0, zOff * -size);
-            obj = Instantiate(building, parent.position + offset, Quaternion.identity, parent);
+            objs.Add(Instantiate(building, parent.position + offset, Quaternion.Euler(270, 0, 0), parent));
 
-            Vector3 scale = obj.transform.localScale;
-            scale.y = randomHeight;
-            obj.transform.localScale = scale;
+
+            // Quick and Dirty Fix
+            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+
+            plane.transform.SetParent(parent);
+
+            plane.transform.localScale = new Vector3(0.1f, 1f, 0.1f);
+            plane.transform.position = parent.position + offset;
+
+            objs.Add(plane);
+
         }
-
-        public void CreatePark(int zOff, int xOff, GameObject park, float size, float height, Transform parent)
-        {
-            Vector3 offset = new Vector3(xOff * size, 0, zOff * -size);
-            obj = Instantiate(park, parent.position + offset, Quaternion.identity, parent);   
-        }   
 
         public void Reinitialize()
         {
-            if (obj != null) Destroy(obj);
             type = blockType.EMPTY;
         }
 
         public void Print()
         {
-            Debug.Log("OBJ: " + obj);
             Debug.Log("TYPE: " + type);
         }
 
@@ -148,13 +144,12 @@ public class CellAutoCities : MonoBehaviour
         drawCity = false;
 
         // Create Arrays that store city objects  
+        objs = new();
         crossroads = new Crossroad[rows + 1, cols + 1]; // 
         city = new Block[rows, cols];
         
         // Get size to offset buildings, their default height, and roadsizes
-        bdSize = building.GetComponentInChildren<MeshRenderer>().bounds.size.x;
-        unitHeight = building.GetComponentInChildren<MeshRenderer>().bounds.size.y;
-        roadSize = road.GetComponent<MeshRenderer>().bounds.size.x;
+        bdSize = 1f;
 
         // Each block will be slightly larger than the buildings, to make room for the roads
         unitSize = bdSize + roadWidth;
@@ -263,7 +258,10 @@ public class CellAutoCities : MonoBehaviour
         for (int i = 0; i < rows; i++){
             for (int j = 0; j < cols; j++)
             {    
-                if (city[i,j].type == blockType.BUILDING) city[i,j].CreateBuilding(i, j, building, unitSize, unitHeight, transform);
+                if (city[i,j].type == blockType.BUILDING) {
+                    GameObject building = buildingPrefabs[UnityEngine.Random.Range(0, buildingPrefabs.Length)];
+                    city[i,j].CreateBuilding(i, j, building, unitSize, unitHeight, transform, objs);
+                }
                 // else if (city[i,j].type == blockType.PARK) city[i,j].CreatePark(i, j, park, unitSize, unitHeight, transform);
             }
         }
@@ -432,6 +430,8 @@ public class CellAutoCities : MonoBehaviour
                 crossroads[i,j].Reinitialize();
             }
         }
+
+        objs.ForEach(obj => Destroy(obj));
 
         Start();
     }

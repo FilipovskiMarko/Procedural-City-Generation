@@ -240,7 +240,7 @@ Transform:
   m_GameObject: {fileID: 203844586}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: -5.084, y: 3, z: 0.031}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -279,9 +279,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CellAutoCities
   rows: 10
   cols: 10
-  building: {fileID: 351069332505971880, guid: cdfcd01c03d58c78ab4c6ec94708fe02, type: 3}
-  crossroad: {fileID: 7859417379446027508, guid: 5269a9ebfe895f07589a9a1d63eb2269, type: 3}
-  road: {fileID: 1114738830901394891, guid: 9e88bc8d9b5a29cdebec22d9e2a313fe, type: 3}
+  buildingPrefabs:
+  - {fileID: 7711102716089742742, guid: 032723dce9f565607ac8f5f4b7b5e4c7, type: 3}
+  - {fileID: 819986831886030883, guid: 50085e94debe2cc05bd99b7b7b89d6a3, type: 3}
+  - {fileID: 6556528369893741413, guid: b51769635780de3ec92979028fe9d357, type: 3}
+  - {fileID: 4877902395893418591, guid: 0f931938bfa57916ab287773d43837e2, type: 3}
+  - {fileID: 2825772327244759828, guid: 1aebe5859d43eaf919c167d1fe5f13a0, type: 3}
+  - {fileID: 9033846082069145820, guid: 2e81a8e60a1afb742b96623ac96d8b07, type: 3}
+  - {fileID: 6960050718658876240, guid: 537305e3e4a6b90cdbb1d0df64b64e7b, type: 3}
+  - {fileID: 7675662931533565920, guid: 8220ec6b3735d49e69de2af3ce4643b4, type: 3}
+  - {fileID: 4910492004365319506, guid: 108ba48a9858cad21a559f877915ce6b, type: 3}
+  - {fileID: 884139985101500270, guid: 97781a86637935f4e95fa439f7e35fec, type: 3}
+  - {fileID: 4738903197716722744, guid: 3db0d0c61662572a194e8dc724ec0082, type: 3}
   parkManager: {fileID: 817071420}
   roadManager: {fileID: 1502089342}
   restartAction:
@@ -402,11 +411,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08f95e3de04364619ae55fbfc8d9e7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParkManager
+  shift: 0
   buildingSize: 0
   unitSize: 0
   defaultY: 0
-  verticesPerPark: 11
-  heightScale: 1
+  verticesPerPark: 15
+  heightScale: 0.1
   mat: {fileID: 2100000, guid: 7ce9264f9bd5a6f36a8dec196ee5fb55, type: 2}
 --- !u!4 &817071421
 Transform:
@@ -560,6 +570,119 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!1 &1077424160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1077424164}
+  - component: {fileID: 1077424163}
+  - component: {fileID: 1077424162}
+  - component: {fileID: 1077424161}
+  m_Layer: 0
+  m_Name: Water
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!64 &1077424161
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077424160}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1077424162
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077424160}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 969135da7737d20a4892a40135c169b1, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1077424163
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077424160}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1077424164
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077424160}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5, y: -0.1, z: -5}
+  m_LocalScale: {x: 1.1, y: 1, z: 1.1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1502089341
 GameObject:
   m_ObjectHideFlags: 0
@@ -592,8 +715,7 @@ MonoBehaviour:
   roadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
   crossroadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
   roadMat: {fileID: 2100000, guid: 64a5a5707875ac849af6c800b469a980, type: 2}
-  crossroadMat: {fileID: 2100000, guid: 64a5a5707875ac849af6c800b469a980, type: 2}
-  drawMeshes: 0
+  crossroadMat: {fileID: 2100000, guid: e8dfaabb54b24b238b16ab7a5dda0ac7, type: 2}
 --- !u!4 &1502089343
 Transform:
   m_ObjectHideFlags: 0
@@ -618,3 +740,4 @@ SceneRoots:
   - {fileID: 664978098}
   - {fileID: 817071421}
   - {fileID: 1502089343}
+  - {fileID: 1077424164}

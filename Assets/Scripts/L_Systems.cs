@@ -9,12 +9,7 @@ struct stateData
     public Quaternion rotation;
     public Vector3 localScale;
 
-    public stateData(Vector3 pos, Quaternion rot, Vector3 scale)
-    {
-        position = pos;
-        rotation = rot;
-        localScale = scale;
-    }
+    
 }
 public class L_Systems : MonoBehaviour
 {   
@@ -40,6 +35,10 @@ public class L_Systems : MonoBehaviour
     List<Matrix4x4> branchMatrices;
     List<Matrix4x4> leafMatrices;
     Matrix4x4 trunkMatrix;
+
+    RenderParams branchParams;
+    RenderParams leafParams;
+    RenderParams trunkParams;
     Stack<stateData> pointerStack;
 
     int branchCount;
@@ -64,6 +63,11 @@ public class L_Systems : MonoBehaviour
         leafMatrices = new List<Matrix4x4>();
         trunkMatrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one * trunkScale);
         pointerStack = new Stack<stateData>();
+
+        // Initialize the render parameters for branches, leaves, and trunk
+        branchParams = new RenderParams(branchMaterial);
+        leafParams = new RenderParams(leafMaterial);
+        trunkParams = new RenderParams(branchMaterial);
 
         // If not using custom settings, use the default settings from the info struct
         if (!useCustomSettings)
@@ -101,10 +105,10 @@ public class L_Systems : MonoBehaviour
     void Update()
     {   
         if (drawTree)
-        {
-            Graphics.DrawMeshInstanced(branch, 0, branchMaterial, branchMatrices);
-            Graphics.DrawMeshInstanced(leaf, 0, leafMaterial, leafMatrices);
-            Graphics.DrawMeshInstanced(trunk, 0, branchMaterial, new [] {trunkMatrix});
+        {   
+            Graphics.RenderMeshInstanced(branchParams, branch, 0, branchMatrices);
+            Graphics.RenderMeshInstanced(leafParams, leaf, 0, leafMatrices);
+            Graphics.RenderMesh(trunkParams, trunk, 0, trunkMatrix);
         }
     }
 
@@ -192,7 +196,11 @@ public class L_Systems : MonoBehaviour
 
     void Push()
     {
-        pointerStack.Push(new stateData(pointer.position, pointer.rotation, pointer.localScale));
+        pointerStack.Push(new stateData(){
+            position = pointer.position,
+            rotation = pointer.rotation,
+            localScale = pointer.localScale
+        });
     }
 
     void Pop()
