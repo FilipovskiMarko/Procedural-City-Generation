@@ -29,6 +29,7 @@ public class L_Systems : MonoBehaviour
     [SerializeField] float sizeCoefficient = 1.1f;
     [SerializeField] bool randomize = false;
     [SerializeField] float randomRotationRange = 15f;
+    [SerializeField] int leafCount = 5;
     [SerializeField] float leafScale = 0.05f;
     [SerializeField] float trunkScale = 1.5f;
     
@@ -45,7 +46,7 @@ public class L_Systems : MonoBehaviour
     float branchHeight;
     float leafHeight;
     bool drawTree = false;
-    static BasicTree info = new(init: "FA");
+    static LeafyTree info = new(init: "FA");
     Dictionary<char, string[]> rules;
 
     void Awake()
@@ -107,7 +108,7 @@ public class L_Systems : MonoBehaviour
         if (drawTree)
         {   
             Graphics.RenderMeshInstanced(branchParams, branch, 0, branchMatrices);
-            Graphics.RenderMeshInstanced(leafParams, leaf, 0, leafMatrices);
+            if (leafMatrices.Count > 0) Graphics.RenderMeshInstanced(leafParams, leaf, 0, leafMatrices);
             Graphics.RenderMesh(trunkParams, trunk, 0, trunkMatrix);
         }
     }
@@ -130,7 +131,8 @@ public class L_Systems : MonoBehaviour
         {   
             switch (c)
             {
-                case 'L': { CreateLeaf(); } break;
+                case 'L': 
+                case 'l': { CreateLeaf(); } break;
                 case 'X': { CreateBranch(); } break;
                 case '[': { Push(); } break;
                 case ']': { Pop(); } break;
@@ -166,12 +168,16 @@ public class L_Systems : MonoBehaviour
         }
     }
 
+
+
     string TransformChar(char c)
     {
         if (rules.ContainsKey(c)) {
             string result = rules[c][Random.Range(0, rules[c].Length)];
             Debug.Log($"Transforming {c} to {result}");
             return result;
+
+
         }
         else return c.ToString();
     }
@@ -188,10 +194,40 @@ public class L_Systems : MonoBehaviour
 
     void CreateLeaf()
     {   
-        Matrix4x4 leafMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation, Vector3.one * leafScale);
-        leafMatrices.Add(leafMatrix);
+        Quaternion rotSnapshot = pointer.rotation;
+        Vector3 scale = Vector3.one * leafScale;
 
-        pointer.Translate(Vector3.forward * leafHeight * pointer.localScale.z);
+        int randomLeafCount = Random.Range(6, 12 + 1);
+        float randomRotationX = Random.Range(30f, 60f);
+
+        for (int i = 0; i < randomLeafCount; i++)
+        {   
+            Matrix4x4 leafMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation, scale);
+            leafMatrices.Add(leafMatrix);
+
+            float randomRotationY = Random.Range(30f, 60f);
+            float randomRotationZ = Random.Range(30f, 60f);
+
+            pointer.Rotate(
+                randomRotationX,
+                randomRotationY,
+                randomRotationZ,
+                Space.Self);
+        }
+
+        pointer.rotation = rotSnapshot;
+    }
+
+    void CreateFlower()
+    {
+        // TODO: Make use of this function for creating flower petals
+        Vector3 rotate = Vector3.zero;
+        float rotation = 360f / leafCount;
+        for (int i = 0; i < leafCount; i++){
+            pointer.Rotate(0, 0, rotation, Space.Self);
+            Matrix4x4 leafMatrix = Matrix4x4.TRS(pointer.position, pointer.rotation , Vector3.one * leafScale);
+            leafMatrices.Add(leafMatrix);
+        }
     }
 
     void Push()
