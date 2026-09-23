@@ -23,8 +23,9 @@ public class L_Systems : MonoBehaviour
     [SerializeField] bool randomize = false;
     [SerializeField] float randomRotationRange = 15f;
     [SerializeField] int leafCount = 5;
-    [SerializeField] float leafScale = 0.05f;
-    [SerializeField] float trunkScale = 1.5f;
+    [SerializeField] float defaultLeafScale = 0.1f;
+    [SerializeField] float defaultTrunkScale = 0.2f;
+    [SerializeField] string Type;
     
     List<Matrix4x4> branchMatrices;
     List<Matrix4x4> leafMatrices;
@@ -38,8 +39,10 @@ public class L_Systems : MonoBehaviour
     int branchCount;
     float branchHeight;
     float leafHeight;
+    float leafScale = 0.05f;
+    float trunkScale = 1.5f;
     bool drawTree = false;
-    [SerializeField] string Type;
+    
     TreeType info;
     Dictionary<char, string[]> rules;
 
@@ -53,36 +56,40 @@ public class L_Systems : MonoBehaviour
         switch (Type)
         {
             case "BasicTree":
-                info = new BasicTree(init: "FA");
+                info = new BasicTree();
                 break;
             case "LeafyTree":
-                info = new LeafyTree(init: "FA");
+                info = new LeafyTree();
                 break;
             case "ThreeDTree":
-                info = new ThreeDTree(init: "FA");
+                info = new ThreeDTree();
                 break;
             case "ThreeDBinaryTree":
-                info = new ThreeDBinaryTree(init: "FA");
+                info = new ThreeDBinaryTree();
                 break;
             case "FractalPlant":
-                info = new FractalPlant(init: "FA");
+                info = new FractalPlant();
                 break;
             case "TwoDBinaryTree":
-                info = new TwoDBinaryTree(init: "FA");
+                info = new TwoDBinaryTree();
                 break;
             case "CurvyTree":
-                info = new CurvyTree(init: "FA");
+                info = new CurvyTree();
                 break;
             case "PineTree":
-                info = new PineTree(init: "FA");
+                info = new PineTree();
                 break;
             default:
-                info = new LeafyTree(init: "FA");
+                info = new LeafyTree();
                 break;
         }
 
         // Stop Drawing the tree until it is fully generated
         drawTree = false;
+
+        // Scale leaves/trunk with object scale
+        leafScale  = defaultLeafScale * transform.localScale.z;
+        trunkScale = defaultTrunkScale * transform.localScale.z;
 
         // Initialize the branch and leaf matrices, trunk matrix, and pointer stack
         branchMatrices = new List<Matrix4x4>();

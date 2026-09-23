@@ -101,6 +101,6 @@ MonoBehaviour:
   randomize: 1
   randomRotationRange: 15
   leafCount: 6
-  leafScale: 0.8
-  trunkScale: 1.5
+  defaultLeafScale: 0.1
+  defaultTrunkScale: 0.224
   Type: BasicTree

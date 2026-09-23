@@ -4,26 +4,23 @@ using System;
 
 public class Park 
 {
+    public ParkManager parkManager;
+
     public List<Vector2Int> parkCells;
+    public HashSet<Tuple<Vector2Int, Vector2Int>> connected;
+    Dictionary<Vector2Int, int> topLeftIndex;
+
     Mesh parkMesh;
     List<Vector3> vertices;
     List<int> triangles;
-    bool drawMesh = false;
-    RenderParams renderParams;
     int vertPointer = 0;
-    Dictionary<Vector2Int, int> topLeftIndex;
-    public HashSet<Tuple<Vector2Int, Vector2Int>> connected;
-
-
-    List<GameObject> Trees;
-
-
-    public ParkManager parkManager;
+    
+    RenderParams renderParams;
+    bool drawMesh = false;
     
     public Park(ParkManager parkManager)
     {
         parkCells = new();
-        Trees = new();
 
         parkMesh = new Mesh();
         drawMesh = false;
@@ -34,16 +31,16 @@ public class Park
         topLeftIndex = new();
 
         this.parkManager = parkManager;
-        renderParams = new(parkManager.mat);
+        renderParams = new(parkManager.parkMat);
     }
 
     public void CreateParkMesh()
     {   
-        CreatePark();
+        JoinParks();
         UpdateMesh();
     }
 
-    void CreatePark()
+    void JoinParks()
     {  
         foreach(var pair in connected)
         {
@@ -237,8 +234,7 @@ public class Park
         triangles.Add(bottomLeftCorner);
     }
     
-
-    public void DrawParkMesh(Material mat, Matrix4x4 matrix)
+    public void DrawParkMesh(Matrix4x4 matrix)
     {   
         if (!drawMesh) return;
         Graphics.RenderMesh(renderParams, parkMesh, 0, matrix);

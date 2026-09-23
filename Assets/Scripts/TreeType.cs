@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class TreeType : MonoBehaviour
 {
-    public Dictionary<char, string []> rules;
+    [System.NonSerialized] public Dictionary<char, string []> rules;
     public string axiom;
     public int generations;
     public float sizeCoefficient;

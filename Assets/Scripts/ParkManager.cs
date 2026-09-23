@@ -4,17 +4,22 @@ using UnityEngine;
 
 public class ParkManager : MonoBehaviour
 {   
-    public float shift;
-    public float buildingSize;
-    public float unitSize;
-    public float defaultY;
-    public int verticesPerPark = 10;
-    public float heightScale = 1f;
-    public Material mat;
-    List<Park> parks;
+    [System.NonSerialized] public float shift;
+    [System.NonSerialized] public float buildingSize;
+    [System.NonSerialized] public float unitSize;
+    [System.NonSerialized] public float defaultY;
 
-    [SerializeField] GameObject treePrefab;
+    List<Park> parks;
     List<GameObject> treeList;
+
+    public int verticesPerPark = 10;
+    public float heightScale = 0.1f;
+    public Material parkMat;
+    
+
+    [SerializeField] bool drawTrees = false;
+    [SerializeField] GameObject treePrefab;
+    
     
     public void Init(float buildingSize, float unitSize, float defaultY)
     {
@@ -31,7 +36,7 @@ public class ParkManager : MonoBehaviour
     
     public void DrawParkMeshes()
     {
-        foreach (var pk in parks) pk.DrawParkMesh(mat, transform.localToWorldMatrix);  
+        foreach (var pk in parks) pk.DrawParkMesh(transform.localToWorldMatrix);  
     }
 
     public int CreateNewPark()
@@ -41,11 +46,11 @@ public class ParkManager : MonoBehaviour
         return parks.Count - 1;
     }
 
-    public void AddParkBlock(int parkIdx, Vector2Int cell, bool [] hasPark)
+    public void AddParkBlockAndTrees(int parkIdx, Vector2Int cell, bool [] hasPark)
     {
         parks[parkIdx].CreateParkBlock(cell, hasPark);
 
-        CreateTrees(cell); 
+        if (drawTrees) CreateTrees(cell); 
     }
 
     public void SetConnected(int parkIdx, HashSet<Tuple<Vector2Int, Vector2Int>> connected)
@@ -62,20 +67,24 @@ public class ParkManager : MonoBehaviour
 
     void CreateTrees(Vector2Int cell)
     {   
-        float rand = (UnityEngine.Random.value - 0.5f) / 2f;
+        float randOffset = (UnityEngine.Random.value - 0.5f) / 2f;
+        float randScale = (UnityEngine.Random.value / 4f) + 0.75f;
         int noiseDir;
         for (int i = 0; i < 2; i++){
             if (i % 2 == 0) noiseDir = 1;
             else noiseDir = -1;
 
-            float startX  =  (cell.y * unitSize) + (rand * noiseDir);
-            float startZ  = -(cell.x * unitSize) + (rand * noiseDir); // Negative because we want rows to go down
+            float startX  =  (cell.y * unitSize) + (randOffset * noiseDir);
+            float startZ  = -(cell.x * unitSize) + (randOffset * noiseDir); // Negative because we want rows to go down
             float randomY =   GetRandomNoiseHeight(startX, startZ);
 
             Vector3 pos = new(startX, randomY, startZ);
             Quaternion rot = Quaternion.Euler(270, 0, 0);
 
-            treeList.Add(Instantiate(treePrefab, pos, rot, transform));
+            GameObject tree = Instantiate(treePrefab, pos, rot, transform);
+            tree.transform.localScale *= randScale;
+
+            treeList.Add(tree);
         }       
     }
 

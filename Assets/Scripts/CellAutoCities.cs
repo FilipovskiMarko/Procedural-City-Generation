@@ -28,13 +28,6 @@ public class CellAutoCities : MonoBehaviour
     static System.Random rand = new System.Random(seed);
     [SerializeField] InputAction restartAction;
 
-    Vector3 [] moves = 
-    {
-        Vector3.back,
-        Vector3.forward,
-        Vector3.right,
-        Vector3.left
-    };
     void Start()
     {   
         // Stop Drawing city if reseting, so that the meshes don't get drawn while they are being destroyed and recreated
@@ -55,12 +48,12 @@ public class CellAutoCities : MonoBehaviour
         // Init park and road manager default values
         parkManager.Init(bdSize, unitSize, transform.position.y);
         roadManager.Init();
-        
-        
+            
         // Create the city
         InitBuildings();
         InitRoads();
         CreateCity();
+        CreateParks();
 
         drawCity = true;
     }
@@ -180,11 +173,9 @@ public class CellAutoCities : MonoBehaviour
                 crossroads[i,j].CreateRoads(i, j, roadManager, unitSize, roadSize, transform);
             }
         }
-
-        SearchAndCombineParks();
     }
 
-    void SearchAndCombineParks()
+    void CreateParks()
     {
         HashSet<Vector2Int> visited = new();
 
@@ -198,7 +189,7 @@ public class CellAutoCities : MonoBehaviour
 
                 if (visited.Contains(idx)) continue;
 
-                CombineParkMeshes(idx, ref visited);
+                CombineParkMeshes(idx, visited);
 
             }
         }
@@ -206,7 +197,7 @@ public class CellAutoCities : MonoBehaviour
         parkManager.CreateParks();
     }
 
-    void CombineParkMeshes(Vector2Int idx, ref HashSet<Vector2Int> visited)
+    void CombineParkMeshes(Vector2Int idx, HashSet<Vector2Int> visited)
     {
         Stack<Vector2Int> toVisit = new();
         HashSet<Tuple<Vector2Int, Vector2Int>> connected = new();
@@ -268,7 +259,7 @@ public class CellAutoCities : MonoBehaviour
             }
             
             // Finaly add the park block to the park manager, which will create the mesh for it
-            parkManager.AddParkBlock(parkIdx, to, hasPark);
+            parkManager.AddParkBlockAndTrees(parkIdx, to, hasPark);
             
 
             // Only need to check the diagonal direction that is down and right, 
@@ -287,6 +278,24 @@ public class CellAutoCities : MonoBehaviour
         // Set the connected park blocks for the park, 
         // so that when the mesh is created, it will know which edges/corners to connect to other parks
         parkManager.SetConnected(parkIdx, connected);
+    }
+
+    void Restart(InputAction.CallbackContext inputAction)
+    {   
+        int rows = city.GetLength(0);
+        int cols = city.GetLength(1);   
+        for (int i = 0; i < rows + 1; i++)
+        {
+            for (int j = 0; j < cols + 1; j++)
+            {   
+                if (i != rows && j != cols) city[i,j].Reinitialize();
+                crossroads[i,j].Reinitialize();
+            }
+        }
+
+        objs.ForEach(obj => Destroy(obj));
+
+        Start();
     }
 
     bool InboundsCity(int i, int j)
@@ -317,24 +326,6 @@ public class CellAutoCities : MonoBehaviour
     }
 
     
-    
-
-
-    void Restart(InputAction.CallbackContext inputAction)
-    {      
-        for (int i = 0; i < rows + 1; i++)
-        {
-            for (int j = 0; j < cols + 1; j++)
-            {   
-                if (i != rows && j != cols) city[i,j].Reinitialize();
-                crossroads[i,j].Reinitialize();
-            }
-        }
-
-        objs.ForEach(obj => Destroy(obj));
-
-        Start();
-    }
 
     void OnEnable()
     {
