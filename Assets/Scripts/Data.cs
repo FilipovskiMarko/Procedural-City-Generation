@@ -1,192 +1,106 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+enum blockType {
+    EMPTY,
+    BUILDING,
+    PARK            
+};
+struct Block
+{   
+    public blockType type;
 
-struct ThreeDTree
-{
-    public Dictionary<char, string> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
+    public Block(blockType type)
+    {   
+        this.type = type;
+    }
 
-    public ThreeDTree(string init = "FA")
+    public void CreateBuilding(int zOff, int xOff, GameObject building, float size, float height, Transform parent, List<GameObject> objs)
     {
-        axiom = "FA";
-        generations = 10;
-        sizeCoefficient = 1.3f;
-        rotationCoefficient = 10f;
-        rules = new Dictionary<char, string>
-            {
-                {'A' , "^FB>B>>>B"},
-                {'B' , "[^^-F>>>A]"}
-            };
+        Vector3 offset = new Vector3(xOff * size, 0, zOff * -size);
+        objs.Add(GameObject.Instantiate(building, parent.position + offset, Quaternion.Euler(270, 0, 0), parent));
+
+
+        // Quick and Dirty Fix
+        GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+
+        plane.transform.SetParent(parent);
+
+        plane.transform.localScale = new Vector3(0.1f, 1f, 0.1f);
+        plane.transform.position = parent.position + offset;
+
+        objs.Add(plane);
+
+    }
+
+    public void Reinitialize()
+    {
+        type = blockType.EMPTY;
+    }
+
+    public void Print()
+    {
+        Debug.Log("TYPE: " + type);
+    }
+
+}
+struct Crossroad
+{
+    public bool hasCrossroad;
+    public bool hasRoadDown; 
+    public bool hasRoadRight;
+
+    GameObject crossroad;
+    GameObject downRoad;
+    GameObject rightRoad;
+    
+    public Crossroad(bool hasCrossroad)
+    {
+        this.hasRoadDown = true;
+        this.hasRoadRight = true;
+        this.hasCrossroad = true;
+
+        this.crossroad = null;
+        this.rightRoad = null;
+        this.downRoad = null;
+    }
+
+    public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitSize, float roadSize, Transform parent)
+    {   
+        // TODO: Simplify scaling issue, i don't know why the size is so small
+        Vector3 scale = new Vector3(roadSize / 10f, 1, roadSize);
+
+        if (hasRoadDown)
+        {
+            Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.left * unitSize / 2f);
+            roadManager.AddRoad(parent.position + offset, Quaternion.identity, scale);
+        }
+        if (hasRoadRight)
+        {
+            Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.forward * unitSize / 2f);
+            roadManager.AddRoad(parent.position + offset, Quaternion.Euler(0, 90, 0), scale);
+
+        }
+        if (hasCrossroad) { 
+            Vector3 offset = new Vector3((xOff - 0.5f) * unitSize, 0, (-zOff + 0.5f) * unitSize);
+            scale = new Vector3(roadSize / 10f, 1, roadSize / 10f);
+            roadManager.AddCrossroad(parent.position + offset, Quaternion.identity, scale);
+        }
+    }
+
+    public void Reinitialize()
+    {   
+        hasCrossroad = true;
+        hasRoadDown = true;
+        hasRoadRight = true;
     }
 }
-
-struct ThreeDBinaryTree
+struct stateData
 {
-    public Dictionary<char, string> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
+    public Vector3 position;
+    public Quaternion rotation;
+    public Vector3 localScale;
 
-    public ThreeDBinaryTree(string init = "FA")
-    {
-        axiom = "X";
-        generations = 4;
-        sizeCoefficient = 1.2f;
-        rotationCoefficient = 45f;
-        rules = new Dictionary<char, string>
-            {
-                {'F' , "FF"},
-                {'X' , "F-[^[>X]<X]&[>X]<X"}
-            };
-    }
 }
 
-struct FractalPlant
-{
-    public Dictionary<char, string> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
 
-    public FractalPlant(string init = "FA")
-    {
-        axiom = "X";
-        generations = 4;
-        sizeCoefficient = 1.5f;
-        rotationCoefficient = 20f;
-        rules = new Dictionary<char, string>
-            {
-                {'F' , "FF"},
-                {'X' , "F-^[<[X]&X]&F[&FX][>[X]&X]&F[&FX]^X"}
-            };
-    }
-}
-
-struct TwoDBinaryTree
-{
-    public Dictionary<char, string> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
-
-    public TwoDBinaryTree(string init = "FA")
-    {
-        axiom = "X";
-        generations = 4;
-        sizeCoefficient = 1.2f;
-        rotationCoefficient = 45f;
-        rules = new Dictionary<char, string>
-            {
-                {'F' , "FF"},
-                {'X' , "F-[^X]&X"}
-            };
-    }
-}
-
-// Spiral Tree, for testing rotataion and scaling coefficients
-struct CurvyTree
-{
-    public Dictionary<char, string> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
-
-    public CurvyTree(string init = "FA")
-    {
-        axiom = "X";
-        generations = 4;
-        sizeCoefficient = 1.2f;
-        rotationCoefficient = 45f;
-        rules = new Dictionary<char, string>
-            {
-                {'X' , "X-^X"}
-            };
-    }
-}
-
-struct BasicTree
-{
-    public Dictionary<char, string []> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
-
-    public BasicTree(string init = "FA")
-    {
-        axiom = "A";
-        generations = 8;
-        sizeCoefficient = 1.2f;
-        rotationCoefficient = 25;
-        rules = new Dictionary<char, string[]>
-            {   //"X[-<A]", "X->A"
-                {'A' , new[] {"XL-[-<A]>A", "XL-[<A]->A", "XL-[^A]-_A", "XL-[-^A]_A"}},
-                {'L' , new[] {""}}
-            };
-    }
-}
-
-struct LeafyTree
-{
-    public Dictionary<char, string []> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
-
-    public LeafyTree(string init = "FA")
-    {
-        axiom = "A";
-        generations = 8;
-        sizeCoefficient = 1.2f;
-        rotationCoefficient = 25;
-        rules = new Dictionary<char, string[]>
-            {   //"X[-<A]", "X->A"
-                {'A' , new[] {"X-[-<B]>A", "X-[<A]->B", "X-[^B]-_A", "X-[-^A]_B"}},
-                {'B' , new[] {"XL-[-<B]>B", "XL-[<B]->B", "XL-[^B]-_B", "XL-[-^B]_B"}},
-                {'L' , new[] {"l"}},
-                {'l' , new[] {""}}
-            };
-    }
-}
-
-struct PineTree
-{
-    public Dictionary<char, string []> rules;
-    public string axiom;
-    public int generations;
-    public float sizeCoefficient;
-    public float rotationCoefficient;
-
-    public PineTree(string init = "FA")
-    {
-        axiom = "A";
-        generations = 7;
-        sizeCoefficient = 1.3f;
-        rotationCoefficient = 40;
-        rules = new Dictionary<char, string[]>
-            {   
-                //"X-[-[<A]>A]A", "X-[-[>A]<A]A",
-                {'A' , new[] {"X-[-[_A][<A][>A]^A]A" , "X-[-[<A][>A]]A", "X-[-[_A]^A]A", "X-[-_A]A", "X-[-^A]A"}},
-            };
-    }
-}
-
-// Binary 2D Tree
-// public static Dictionary<char, string> rules = new Dictionary<char, string>
-//     {
-//         {'F' , "FF"},
-//         {'X' , "F-[^X]&X"}
-//     };
-
-//     public static int generations = 4;
-//     public static float sizeCoefficient = 1.2f;
-//     public static float rotationCoefficient = 45f;

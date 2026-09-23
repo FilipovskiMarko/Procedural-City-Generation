@@ -1,129 +1,26 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
+
 
 public class CellAutoCities : MonoBehaviour
 {
     [SerializeField] static int seed = 42;
     [SerializeField] int rows;
     [SerializeField] int cols;
+    [SerializeField] int minBuildingsInFirstRow = 2;
+    [SerializeField] int maxBuildingsInFirstRow = 3;
     [SerializeField] GameObject [] buildingPrefabs;
-
     List<GameObject> objs;
     float bdSize;
     float unitSize;
     float unitHeight;
     float roadSize;
     bool drawCity = false;
-    [SerializeField] static float roadWidth = 0.1f;
 
-    enum blockType {
-        EMPTY,
-        BUILDING,
-        PARK            
-    };
-
-    struct Block
-    {   
-        public blockType type;
-
-        public Block(blockType type)
-        {   
-            this.type = type;
-        }
-
-        public void CreateBuilding(int zOff, int xOff, GameObject building, float size, float height, Transform parent, List<GameObject> objs)
-        {
-            Vector3 offset = new Vector3(xOff * size, 0, zOff * -size);
-            objs.Add(Instantiate(building, parent.position + offset, Quaternion.Euler(270, 0, 0), parent));
-
-
-            // Quick and Dirty Fix
-            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-
-            plane.transform.SetParent(parent);
-
-            plane.transform.localScale = new Vector3(0.1f, 1f, 0.1f);
-            plane.transform.position = parent.position + offset;
-
-            objs.Add(plane);
-
-        }
-
-        public void Reinitialize()
-        {
-            type = blockType.EMPTY;
-        }
-
-        public void Print()
-        {
-            Debug.Log("TYPE: " + type);
-        }
-
-    }
     Block [,] city;
-    struct Crossroad
-    {
-        public bool hasCrossroad;
-        public bool hasRoadDown; 
-        public bool hasRoadRight;
-
-        GameObject crossroad;
-        GameObject downRoad;
-        GameObject rightRoad;
-        
-        public Crossroad(bool hasCrossroad)
-        {
-            this.hasRoadDown = true;
-            this.hasRoadRight = true;
-            this.hasCrossroad = true;
-
-            this.crossroad = null;
-            this.rightRoad = null;
-            this.downRoad = null;
-        }
-
-        public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitSize, Transform parent)
-        {   
-            // TODO: Simplify scaling issue, i don't know why the size is so small
-            Vector3 scale = new Vector3(roadWidth / 10f, 1, roadWidth);
-
-            if (hasRoadDown)
-            {
-                Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.left * unitSize / 2f);
-                roadManager.AddRoad(parent.position + offset, Quaternion.identity, scale);
-            }
-            if (hasRoadRight)
-            {
-                Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.forward * unitSize / 2f);
-                roadManager.AddRoad(parent.position + offset, Quaternion.Euler(0, 90, 0), scale);
-
-            }
-        }
-
-        public void CreateCrossroad(int zOff, int xOff, RoadManager roadManager, float unitSize, Transform parent)
-        {   
-            if (!hasCrossroad) return;
-            
-            Vector3 scale = new Vector3(roadWidth / 10f, 1, roadWidth / 10f);
-            Vector3 offset = new Vector3((xOff - 0.5f) * unitSize, 0, (-zOff + 0.5f) * unitSize);
-
-            roadManager.AddCrossroad(parent.position + offset, Quaternion.identity, scale);
-        }
-
-        public void Reinitialize()
-        {
-            if (downRoad != null) Destroy(downRoad);
-            if (rightRoad != null) Destroy(rightRoad);
-
-            if (crossroad != null) Destroy(crossroad);
-
-            hasRoadDown = true;
-            hasRoadRight = true;
-        }
-    }
     Crossroad [,] crossroads;
 
     [SerializeField] ParkManager parkManager;
@@ -150,9 +47,10 @@ public class CellAutoCities : MonoBehaviour
         
         // Get size to offset buildings, their default height, and roadsizes
         bdSize = 1f;
+        roadSize = bdSize / 10f;
 
-        // Each block will be slightly larger than the buildings, to make room for the roads
-        unitSize = bdSize + roadWidth;
+        // Each unit will be slightly larger than the buildings, to make room for the roads
+        unitSize = bdSize + roadSize;
 
         // Init park and road manager default values
         parkManager.Init(bdSize, unitSize, transform.position.y);
@@ -167,27 +65,43 @@ public class CellAutoCities : MonoBehaviour
         drawCity = true;
     }
 
-    void Initialize()
+    void Update()
     {   
-        // TODO: The amount should be random (but have at least 2-3), and the placement should be random as well, but for now we will just place a building in the first row with 50% chance
+        if (drawCity)
+        {
+            parkManager.DrawParkMeshes();
+            roadManager.DrawRoads();
+        }
+    }
+
+    void InitializeFirstRow()
+    {   
+        maxBuildingsInFirstRow = Mathf.Min(cols + 1, maxBuildingsInFirstRow);
+        int randBuildingCount = UnityEngine.Random.Range(minBuildingsInFirstRow, maxBuildingsInFirstRow);
+
+        List<int> randParks = new(cols);
+        for(int i = 0; i < cols; i++) randParks.Add(i); 
+
+        for (int i = 0; i < randBuildingCount; i++)
+        {
+            int indx = UnityEngine.Random.Range(0, randParks.Count);
+            randParks.RemoveAt(indx);
+        }
+
         for (int j = 0; j < cols; j++)
         {   
-            if (rand.Next(100) < 50){
-                city[0, j] = new Block(blockType.BUILDING);
-            }
-            else
-            {
-                city[0, j] = new Block(blockType.PARK);
-            }
-        }
-        
+            if (randParks.Contains(j)) city[0, j] = new Block(blockType.PARK);
+            else city[0, j] = new Block(blockType.BUILDING);
+        } 
     }
 
     void InitBuildings()
     {   
-        Initialize();
+        InitializeFirstRow();
 
-        // Rules:
+        // Rules
+        // If row above contains is P(ark), P(ark), B(uilding) it is 1 because it's 001 in binary (P = 0, B = 1)
+        // So only PPB, PBP, PBB, BPP produce a building on the row below
         List<int> placementVals = new List<int>{1, 2, 3, 4};
 
         for (int i = 0; i < rows - 1; i++)
@@ -233,7 +147,7 @@ public class CellAutoCities : MonoBehaviour
                 if (j == cols) { crossroads[i, j].hasRoadRight = false;}
                 if (i == rows) { crossroads[i, j].hasRoadDown  = false;}
 
-                if (i == cols || j == rows) continue;
+                if (i == rows || j == cols) continue;
                 
                 if (city[i, j].type != blockType.BUILDING)
                 {   
@@ -255,26 +169,19 @@ public class CellAutoCities : MonoBehaviour
 
     void CreateCity()
     {
-        for (int i = 0; i < rows; i++){
-            for (int j = 0; j < cols; j++)
+        for (int i = 0; i < rows + 1; i++){
+            for (int j = 0; j < cols + 1; j++)
             {    
-                if (city[i,j].type == blockType.BUILDING) {
+                if (i != rows && j != cols && city[i,j].type == blockType.BUILDING) {
                     GameObject building = buildingPrefabs[UnityEngine.Random.Range(0, buildingPrefabs.Length)];
                     city[i,j].CreateBuilding(i, j, building, unitSize, unitHeight, transform, objs);
                 }
-                // else if (city[i,j].type == blockType.PARK) city[i,j].CreatePark(i, j, park, unitSize, unitHeight, transform);
+
+                crossroads[i,j].CreateRoads(i, j, roadManager, unitSize, roadSize, transform);
             }
         }
 
         SearchAndCombineParks();
-
-        for (int i = 0; i < rows + 1; i++){
-            for (int j = 0; j < cols + 1; j++)
-            {    
-                crossroads[i,j].CreateRoads(i, j, roadManager, unitSize, transform);
-                crossroads[i,j].CreateCrossroad(i, j, roadManager, unitSize, transform);
-            }
-        }
     }
 
     void SearchAndCombineParks()
@@ -409,14 +316,7 @@ public class CellAutoCities : MonoBehaviour
         return city[i, j].type == blockType.BUILDING;
     }
 
-    void Update()
-    {   
-        if (drawCity)
-        {
-            parkManager.DrawParkMeshes();
-            roadManager.DrawRoads();
-        }
-    }
+    
     
 
 

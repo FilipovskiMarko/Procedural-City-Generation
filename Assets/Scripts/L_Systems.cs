@@ -3,14 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
-struct stateData
-{
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 localScale;
 
-    
-}
 public class L_Systems : MonoBehaviour
 {   
     [SerializeField] int seed = 42;
@@ -46,7 +39,8 @@ public class L_Systems : MonoBehaviour
     float branchHeight;
     float leafHeight;
     bool drawTree = false;
-    static LeafyTree info = new(init: "FA");
+    [SerializeField] string Type;
+    TreeType info;
     Dictionary<char, string[]> rules;
 
     void Awake()
@@ -55,7 +49,38 @@ public class L_Systems : MonoBehaviour
         Random.InitState(seed);
     }
     void Start()
-    {   
+    {
+        switch (Type)
+        {
+            case "BasicTree":
+                info = new BasicTree(init: "FA");
+                break;
+            case "LeafyTree":
+                info = new LeafyTree(init: "FA");
+                break;
+            case "ThreeDTree":
+                info = new ThreeDTree(init: "FA");
+                break;
+            case "ThreeDBinaryTree":
+                info = new ThreeDBinaryTree(init: "FA");
+                break;
+            case "FractalPlant":
+                info = new FractalPlant(init: "FA");
+                break;
+            case "TwoDBinaryTree":
+                info = new TwoDBinaryTree(init: "FA");
+                break;
+            case "CurvyTree":
+                info = new CurvyTree(init: "FA");
+                break;
+            case "PineTree":
+                info = new PineTree(init: "FA");
+                break;
+            default:
+                info = new LeafyTree(init: "FA");
+                break;
+        }
+
         // Stop Drawing the tree until it is fully generated
         drawTree = false;
 
@@ -66,9 +91,9 @@ public class L_Systems : MonoBehaviour
         pointerStack = new Stack<stateData>();
 
         // Initialize the render parameters for branches, leaves, and trunk
-        branchParams = new RenderParams(branchMaterial);
-        leafParams = new RenderParams(leafMaterial);
-        trunkParams = new RenderParams(branchMaterial);
+        branchParams =  new RenderParams(branchMaterial) {receiveShadows = true, shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On };
+        leafParams   =  new RenderParams(leafMaterial)   {receiveShadows = true, shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On };;
+        trunkParams  =  new RenderParams(branchMaterial);
 
         // If not using custom settings, use the default settings from the info struct
         if (!useCustomSettings)
@@ -87,8 +112,8 @@ public class L_Systems : MonoBehaviour
         leafHeight = leaf.bounds.size.z * leafScale;
 
         // Set the pointer's position and rotation to the base of the trunk
-        pointer.position  = transform.position;
-        pointer.rotation  = transform.rotation;
+        pointer.position   = transform.position;
+        pointer.rotation   = transform.rotation;
         pointer.localScale = transform.localScale;
 
         // Get the height of the trunk band and move the pointer to the top of the trunk
@@ -110,6 +135,9 @@ public class L_Systems : MonoBehaviour
             Graphics.RenderMeshInstanced(branchParams, branch, 0, branchMatrices);
             if (leafMatrices.Count > 0) Graphics.RenderMeshInstanced(leafParams, leaf, 0, leafMatrices);
             Graphics.RenderMesh(trunkParams, trunk, 0, trunkMatrix);
+
+            Debug.Log($"branchMatrices length: {branchMatrices.Count}, leafMatrices length: {leafMatrices.Count}, FinalString length: {finalString.Length}");
+            
         }
     }
 
@@ -197,7 +225,7 @@ public class L_Systems : MonoBehaviour
         Quaternion rotSnapshot = pointer.rotation;
         Vector3 scale = Vector3.one * leafScale;
 
-        int randomLeafCount = Random.Range(6, 12 + 1);
+        int randomLeafCount = Random.Range(leafCount, 2*leafCount);
         float randomRotationX = Random.Range(30f, 60f);
 
         for (int i = 0; i < randomLeafCount; i++)

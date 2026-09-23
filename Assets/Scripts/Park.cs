@@ -4,7 +4,7 @@ using System;
 
 public class Park 
 {
-    List<Vector2Int> parkCells;
+    public List<Vector2Int> parkCells;
     Mesh parkMesh;
     List<Vector3> vertices;
     List<int> triangles;
@@ -14,11 +14,16 @@ public class Park
     Dictionary<Vector2Int, int> topLeftIndex;
     public HashSet<Tuple<Vector2Int, Vector2Int>> connected;
 
+
+    List<GameObject> Trees;
+
+
     public ParkManager parkManager;
     
     public Park(ParkManager parkManager)
     {
         parkCells = new();
+        Trees = new();
 
         parkMesh = new Mesh();
         drawMesh = false;
@@ -30,6 +35,12 @@ public class Park
 
         this.parkManager = parkManager;
         renderParams = new(parkManager.mat);
+    }
+
+    public void CreateParkMesh()
+    {   
+        CreatePark();
+        UpdateMesh();
     }
 
     void CreatePark()
@@ -126,7 +137,7 @@ public class Park
                 }
                 else
                 {
-                    randomY = GetRandomNoiseHeight(startX + (offset * j), startZ - (offset * i));
+                    randomY = parkManager.GetRandomNoiseHeight(startX + (offset * j), startZ - (offset * i));
                 }
 
                 vertices.Add(new(startX + (offset * j), randomY, startZ - (offset * i)));
@@ -147,13 +158,6 @@ public class Park
                 
             }
         } 
-    }
-
-    void LogParkBlockFlags(Vector2Int start, bool left, bool right, bool up, bool down)
-    {
-        Debug.Log(
-            $"Park start vertex: {start} | left={left} | right={right} | up={up} | down={down}"
-        );
     }
 
     void JoinParkEdges(Vector2Int from, Vector2Int to)
@@ -232,26 +236,11 @@ public class Park
         triangles.Add(bottomRightCorner);
         triangles.Add(bottomLeftCorner);
     }
-    public void CreateParkMesh()
-    {   
-        CreatePark();
-        UpdateMesh();
-    }
+    
 
     public void DrawParkMesh(Material mat, Matrix4x4 matrix)
     {   
         if (!drawMesh) return;
         Graphics.RenderMesh(renderParams, parkMesh, 0, matrix);
     }
-
-    float GetRandomNoiseHeight(float x, float z)
-    {   
-        float shift = parkManager.shift;
-
-        // Shift vals between -0.6 and 1.4
-        float randomHeight = (Mathf.PerlinNoise(x + shift, z + shift) - 0.3f) * 2f;
-        
-        return randomHeight * parkManager.heightScale;
-    }
-
 }
