@@ -118,7 +118,133 @@ void OffsetRotation(float x, float y, float z)
 
 ## Cell Auto
 
-Cell Auto Explanation
+A grid of user defined sizes NxM is defined, and a minumum and maxiumum number of buildings in the first row
+``` c#
+[SerializeField] int rows;
+[SerializeField] int cols;
+[SerializeField] int minBuildingsInFirstRow = 2;
+[SerializeField] int maxBuildingsInFirstRow = 3;
+```
+
+Then, after initializing the first row randomly, the values of the remaining rows are chosen programaticaly
+
+To choose the type of the cell in position **(i+1, j)**, we look at the cells directly above it, so **(i, j-1), (i, j), (i, j+1)**,
+Because we have 3 possible values that can either contain a building or not, we can represent the position as a 3bit binary number.
+
+For example if the 3 above cells are all **buildings** we have a position that maps to the number: 111<sub>2</sub> = 7<sub>10</sub>,
+if the cell furthest to the right is a Park and all other cells are buildings we have the number: 110<sub>2</sub> = 6<sub>10</sub>
+
+We can represent every position like this and have a list of decimal numbers that represent rules for placing buildings in newly generated row
+
+```c#
+
+void InitBuildings()
+    {   
+        InitializeFirstRow();
+
+        // Rules
+        List<int> ruleset = new List<int>{1, 2, 3, 4};
+
+        for (int i = 0; i < rows - 1; i++)
+        {   
+            blockType left  = city[i, cols-1].type;
+            blockType mid   = city[i, 0].type;
+            blockType right = city[i, 1].type;
+            for (int j = 0; j < cols; j++)
+            {   
+                int val = 0;
+                if (left  == blockType.BUILDING) val += 4;
+                if ( mid  == blockType.BUILDING) val += 2;
+                if (right == blockType.BUILDING) val += 1;
+
+                if (ruleset.Contains(val))
+                {   
+                    city[i+1, j] = new Block(blockType.BUILDING);
+                }
+                else
+                {
+                    city[i+1, j] = new Block(blockType.PARK);
+                }
+
+                left = mid;
+                mid = right;
+                right = city[i, (j + 2) % cols].type;
+            }
+        } 
+    }
+```
+
+After that, we need to create roads between buidlings, for that we use an array just like the buildings, with one extra row and column added
+
+The squares in this image represent the buildings, and the dots represent the crossroads so that every building has a crossroad on it's upper left corner
+
+<img width="640" height="384" alt="CrossroadSC" src="https://github.com/user-attachments/assets/e83f4a76-f7b2-4d28-aa2a-79770958fe2f" />
+
+Every crossroad object has 3 boolean flags, that look like this
+
+```c#
+struct Crossroad
+{
+    public bool hasCrossroad;
+    public bool hasRoadDown; 
+    public bool hasRoadRight;
+}
+```
+_Only 3 flags are necessary to map every crossroad on the grid_
+
+However, there only need to be crossroads/roads surrounding the tiles where the buildings were placed, so we need to loop through the city array and decide where we want there to be crossroads/roads
+```c#
+ void InitRoads()
+    {   
+       
+        for (int i = 0; i < rows + 1; i++)
+        {
+            for (int j = 0; j < cols + 1; j++)
+            {   
+                // By default, assume every road/crossroad is needed, and remove the unnecessary ones  
+                crossroads[i, j] = new Crossroad(true);    
+
+                if (j == cols) { crossroads[i, j].hasRoadRight = false;}
+                if (i == rows) { crossroads[i, j].hasRoadDown  = false;}
+
+                if (i == rows || j == cols) continue;
+
+                // If the cell is a park, we need to check the surrounding cells/crossroads to
+                // determine if roads are necessary
+                if (city[i, j].type != blockType.BUILDING)
+                {   
+                    if (InboundsCity(i, j - 1) && !IsBuilding(i, j - 1)) crossroads[i, j].hasRoadDown = false;
+                    if (InboundsCity(i - 1, j) && !IsBuilding(i - 1, j)) crossroads[i, j].hasRoadRight = false;
+                    
+                    if (InboundsCity(i - 1, j) && InboundsCity(i, j - 1) &&
+                        !crossroads[i - 1, j].hasRoadDown && !crossroads[i, j - 1].hasRoadRight)
+                    {
+                        crossroads[i, j].hasCrossroad = false;
+                    }
+                }
+            }
+        }
+    }
+```
+
+As you can see the last row and column only contain one direction and always contain a crossroad, this is because we want there to be a border
+around the city
+
+<img width="640" height="384" alt="CrossroadBorder" src="https://github.com/user-attachments/assets/75e9dfaf-9a0c-4988-ae57-7ccf243486ab" />
+
+
+
+
+After all the cells are initialized, we need to generate the parks
+
+I wanted all the parks to be connected together as opposed to individual tiles that are separated by roads, so I implemented a system that finds all the adjacent parks,
+records their positions in a List and generates a custom mesh that connects all of them together, generating random height values for different points of the mesh in the process,
+giving the parks a more natural look as opposed to a flat plane. I have additional information on that process in the Challenges and Solutions section
+
+
+
+
+
 
 
 ## Challenges and Solutions
