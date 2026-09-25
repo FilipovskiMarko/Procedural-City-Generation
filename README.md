@@ -226,6 +226,7 @@ However, there only need to be crossroads/roads surrounding the tiles where the 
         }
     }
 ```
+<br>
 
 As you can see the last row and column only contain one direction and always contain a crossroad, this is because we want there to be a border
 around the city
@@ -233,7 +234,7 @@ around the city
 <img width="640" height="384" alt="CrossroadBorder" src="https://github.com/user-attachments/assets/75e9dfaf-9a0c-4988-ae57-7ccf243486ab" />
 
 
-
+<br>
 After all the cells and roads are initialized, creating the city is a simple as going through the grid and running the custom Create function for each object
 
 ```c#
@@ -252,7 +253,7 @@ void CreateCity()
         }
     }
 ```
-
+<br>
 For the buildings a prefab is used, chosen randomly from an array filled manually by the user, also the building is rotated on its Y-Axis for variety
 
 ```c3
@@ -265,7 +266,7 @@ public void CreateBuilding(int zOff, int xOff, GameObject building, float size, 
         objs.Add(GameObject.Instantiate(building, parent.position + offset, Quaternion.Euler(270, randomRot, 0), parent));
     }
 ```
-
+<br>
 For the roads, the transformation matrices are sent to a RoadManager object, that uses GPUInstancing to create them 
 
 ```c#
@@ -284,6 +285,21 @@ public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitS
 ```
 
 All of the objects are drawn on the XZ Plane where the row coordinate is inverted on the Z-Axis [0, -inf) and the column coordinate is mapped to the X-Axis [0, +inf)
+
+## Final Look:
+<table>
+  <tr>
+    <td align="center">
+            <img width="400" height="400" alt="TopView1" src="https://github.com/user-attachments/assets/669d421c-075b-4339-bf90-0082f9455c26" />
+    </td>
+    <td align="center">
+            <img width="400" height="400" alt="TopView2" src="https://github.com/user-attachments/assets/bf69d51f-9bd5-4f98-b85e-48e76ffee91b" />
+    </td>
+ </tr>
+</table>
+
+<img width="1595" height="775" alt="Side-View" src="https://github.com/user-attachments/assets/31b1b159-2bee-4ac4-93a5-a3c466f3c216" />
+
 
 
 _I wanted all the parks to be connected together as opposed to individual tiles that are separated by roads, so I implemented a system that finds all the adjacent parks,
