@@ -93,30 +93,30 @@ void OffsetRotation(float x, float y, float z)
 <table>
   <tr>
     <td align="center">
-            <img width="800" height="800" alt="LSys_Tree2" src="https://github.com/user-attachments/assets/f3b82d01-9b59-4414-881c-6103dddb2526" />
+            <img width="200" height="200" alt="LSys_Tree2" src="https://github.com/user-attachments/assets/f3b82d01-9b59-4414-881c-6103dddb2526" />
     </td>
     <td align="center">
-            <img width="800" height="800" alt="Tree2" src="https://github.com/user-attachments/assets/05de3981-7c10-424f-9cfb-72dba717a003" />
+            <img width="200" height="200" alt="Tree2" src="https://github.com/user-attachments/assets/05de3981-7c10-424f-9cfb-72dba717a003" />
     </td>
     <td align="center">
-            <img width="800" height="800" alt="LSys_Tree3" src="https://github.com/user-attachments/assets/e456af15-f696-436d-bdcb-3229eb53e4ba" />
+            <img width="200" height="200" alt="LSys_Tree3" src="https://github.com/user-attachments/assets/e456af15-f696-436d-bdcb-3229eb53e4ba" />
     </td>
  </tr>
  <tr>
     <td align="center">
-            <img width="800" height="800" alt="LSys_Tree1" src="https://github.com/user-attachments/assets/36785926-ad90-407e-8125-e4396d206a68" />  
+            <img width="200" height="200" alt="LSys_Tree1" src="https://github.com/user-attachments/assets/36785926-ad90-407e-8125-e4396d206a68" />  
     </td>
     <td align="center">
-            <img width="800" height="800" alt="Tree1" src="https://github.com/user-attachments/assets/5ba61197-68f4-4e47-91ce-983cf5cb3961" />
+            <img width="200" height="200" alt="Tree1" src="https://github.com/user-attachments/assets/5ba61197-68f4-4e47-91ce-983cf5cb3961" />
     </td>
     <td align="center">
-            <img width="800" height="800" alt="Tree3" src="https://github.com/user-attachments/assets/6c47f48e-4764-42e8-aeac-c5a46e5dbdc8" />
+            <img width="200" height="200" alt="Tree3" src="https://github.com/user-attachments/assets/6c47f48e-4764-42e8-aeac-c5a46e5dbdc8" />
     </td>
 
  </tr>
 </table>
 
-## Cell Auto
+## Cellular Automation
 
 A grid of user defined sizes NxM is defined, and a minumum and maxiumum number of buildings in the first row
 ``` c#
@@ -234,12 +234,61 @@ around the city
 
 
 
+After all the cells and roads are initialized, creating the city is a simple as going through the grid and running the custom Create function for each object
 
-After all the cells are initialized, we need to generate the parks
+```c#
+void CreateCity()
+    {
+        for (int i = 0; i < rows + 1; i++){
+            for (int j = 0; j < cols + 1; j++)
+            {    
+                if (i != rows && j != cols && city[i,j].type == blockType.BUILDING) {
+                    GameObject building = buildingPrefabs[UnityEngine.Random.Range(0, buildingPrefabs.Length)];
+                    city[i,j].CreateBuilding(i, j, building, unitSize, unitHeight, transform, objs);
+                }
 
-I wanted all the parks to be connected together as opposed to individual tiles that are separated by roads, so I implemented a system that finds all the adjacent parks,
+                crossroads[i,j].CreateRoads(i, j, roadManager, unitSize, roadSize, transform);
+            }
+        }
+    }
+```
+
+For the buildings a prefab is used, chosen randomly from an array filled manually by the user, also the building is rotated on its Y-Axis for variety
+
+```c3
+public void CreateBuilding(int zOff, int xOff, GameObject building, float size, float height, Transform parent, List<GameObject> objs)
+    {
+        Vector3 offset = new Vector3(xOff * size, 0, zOff * -size);
+        float randomRot = Random.Range(0, 3 + 1) * 90f;
+
+        // Keep referance to object so that it can be safely deleted later
+        objs.Add(GameObject.Instantiate(building, parent.position + offset, Quaternion.Euler(270, randomRot, 0), parent));
+    }
+```
+
+For the roads, the transformation matrices are sent to a RoadManager object, that uses GPUInstancing to create them 
+
+```c#
+public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitSize, float roadSize, Transform parent)
+    {   
+        Vector3 scale = new Vector3(roadSize / 10f, 1, roadSize);
+
+        if (hasRoadDown)
+        {
+            Vector3 offset = new Vector3(xOff * unitSize, 0, -zOff* unitSize) + (Vector3.left * unitSize / 2f);
+            roadManager.AddRoad(parent.position + offset, Quaternion.identity, scale);
+        }
+
+        //...
+    } 
+```
+
+All of the objects are drawn on the XZ Plane where the row coordinate is inverted on the Z-Axis [0, -inf) and the column coordinate is mapped to the X-Axis [0, +inf)
+
+
+_I wanted all the parks to be connected together as opposed to individual tiles that are separated by roads, so I implemented a system that finds all the adjacent parks,
 records their positions in a List and generates a custom mesh that connects all of them together, generating random height values for different points of the mesh in the process,
-giving the parks a more natural look as opposed to a flat plane. I have additional information on that process in the Challenges and Solutions section
+giving the parks a more natural look as opposed to a flat plane. I have additional information on that process in the Challenges and Solutions section_
 
 
 
