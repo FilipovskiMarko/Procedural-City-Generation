@@ -1,6 +1,8 @@
 # Procedural Generation using L-Systems and Cellular Automata
 
-This is a project i made for generating Trees using l-systems and grid based cities with cell auto 
+The goal of this project was to use multiple techniques for procedural generation to create a real looking city in Unity. It features a comprehensive explanation of the implementation of each of the systems,
+and image results of said implementations,
+
 
 ## L Systems
 
@@ -319,4 +321,4 @@ All of the park cells that are directly adjacent to each other, are connected in
 
 
 
-## Final Result
+## Final Results:
