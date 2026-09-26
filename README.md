@@ -89,7 +89,7 @@ void OffsetRotation(float x, float y, float z)
         pointer.Rotate(x, y, z, Space.Self);
     }
 ```
-#### Final Results:
+#### Tree Images:
 <table>
   <tr>
     <td align="center">
@@ -117,7 +117,7 @@ void OffsetRotation(float x, float y, float z)
 </table>
 
 ## Cellular Automation
-
+#### Buildings
 A grid of user defined sizes NxM is defined, and a minumum and maxiumum number of buildings in the first row
 ``` c#
 [SerializeField] int rows;
@@ -173,7 +173,7 @@ void InitBuildings()
         } 
     }
 ```
-
+#### Roads
 After that, we need to create roads between buidlings, for that we use an array just like the buildings, with one extra row and column added
 
 The squares in this image represent the buildings, and the dots represent the crossroads so that every building has a crossroad on it's upper left corner
@@ -231,6 +231,7 @@ However, there only need to be crossroads/roads surrounding the tiles where the 
 As you can see the last row and column only contain one direction and always contain a crossroad, this is because we want there to be a border
 around the city
 
+
 <img width="640" height="384" alt="CrossroadBorder" src="https://github.com/user-attachments/assets/75e9dfaf-9a0c-4988-ae57-7ccf243486ab" />
 
 
@@ -286,7 +287,22 @@ public void CreateRoads(int zOff, int xOff, RoadManager roadManager, float unitS
 
 All of the objects are drawn on the XZ Plane where the row coordinate is inverted on the Z-Axis [0, -inf) and the column coordinate is mapped to the X-Axis [0, +inf)
 
-## Final Look:
+
+#### Parks
+
+All of the park cells that are directly adjacent to each other, are connected into one singular mesh spanning all of the cells. The height value of each vertex for the mesh is obtained using the Perlin Noise Function (transformed from [0, 1] to [-0.6, 1.4] so that the parks go bellow as well as above the defaultY level) and scaled by a used defined scalar
+
+
+```c#
+ public float GetRandomNoiseHeight(float x, float z)
+    {   
+        // Shift vals between -0.6 and 1.4
+        float randomHeight = (Mathf.PerlinNoise(x, z) - 0.3f) * 2f;
+        return randomHeight * heightScale;
+    }
+```
+
+## City Images:
 <table>
   <tr>
     <td align="center">
@@ -302,19 +318,5 @@ All of the objects are drawn on the XZ Plane where the row coordinate is inverte
 
 
 
-_I wanted all the parks to be connected together as opposed to individual tiles that are separated by roads, so I implemented a system that finds all the adjacent parks,
-records their positions in a List and generates a custom mesh that connects all of them together, generating random height values for different points of the mesh in the process,
-giving the parks a more natural look as opposed to a flat plane. I have additional information on that process in the Challenges and Solutions section_
 
-
-
-
-
-
-
-## Challenges and Solutions
-- Parks
-- Optimisation
-- etc
-
-## 
+## Final Result
