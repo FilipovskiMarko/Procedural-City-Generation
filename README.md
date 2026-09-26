@@ -3,6 +3,8 @@
 The goal of this project was to use multiple techniques for procedural generation to create a real looking city in Unity. It features a comprehensive explanation of the implementation of each of the systems,
 and image results of said implementations,
 
+<img width="1765" height="824" alt="Middle-View" src="https://github.com/user-attachments/assets/847ebd70-db5e-4f37-b487-80a1842b72bc" />
+
 
 ## L Systems
 
@@ -95,24 +97,24 @@ void OffsetRotation(float x, float y, float z)
 <table>
   <tr>
     <td align="center">
-            <img width="200" height="200" alt="LSys_Tree2" src="https://github.com/user-attachments/assets/f3b82d01-9b59-4414-881c-6103dddb2526" />
+            <img width="200" height="200" alt="LSys_Tree2" src="https://github.com/user-attachments/assets/2c493dcf-b622-40d2-bea4-e610178def26" />
     </td>
     <td align="center">
-            <img width="200" height="200" alt="Tree2" src="https://github.com/user-attachments/assets/05de3981-7c10-424f-9cfb-72dba717a003" />
+                <img width="200" height="200" alt="Tree2" src="https://github.com/user-attachments/assets/3349525a-6b7c-4920-a52c-e06aec60522f" />
     </td>
     <td align="center">
-            <img width="200" height="200" alt="LSys_Tree3" src="https://github.com/user-attachments/assets/e456af15-f696-436d-bdcb-3229eb53e4ba" />
+            <img width="200" height="200" alt="LSys_Tree3" src="https://github.com/user-attachments/assets/ef0be92b-f292-4716-9bf3-21a3a04749a0" />
     </td>
  </tr>
  <tr>
     <td align="center">
-            <img width="200" height="200" alt="LSys_Tree1" src="https://github.com/user-attachments/assets/36785926-ad90-407e-8125-e4396d206a68" />  
+            <img width="200" height="200" alt="LSys_Tree1" src="https://github.com/user-attachments/assets/1d5a619b-2ce5-402b-83c6-dba5bdc542a2" />
     </td>
     <td align="center">
-            <img width="200" height="200" alt="Tree1" src="https://github.com/user-attachments/assets/5ba61197-68f4-4e47-91ce-983cf5cb3961" />
+            <img width="200" height="200" alt="Tree1" src="https://github.com/user-attachments/assets/431baf6c-989e-441e-a4dd-ad7f8d2aaee4" />
     </td>
     <td align="center">
-            <img width="200" height="200" alt="Tree3" src="https://github.com/user-attachments/assets/6c47f48e-4764-42e8-aeac-c5a46e5dbdc8" />
+            <img width="200" height="200" alt="Tree3" src="https://github.com/user-attachments/assets/ad560fe8-9129-4988-b7a9-0a331d152e75" />
     </td>
 
  </tr>
@@ -308,10 +310,10 @@ All of the park cells that are directly adjacent to each other, are connected in
 <table>
   <tr>
     <td align="center">
-            <img width="400" height="400" alt="TopView1" src="https://github.com/user-attachments/assets/669d421c-075b-4339-bf90-0082f9455c26" />
+            <img width="400" height="400" alt="TopView1" src="https://github.com/user-attachments/assets/dc38ee4b-bf12-447c-b2e6-ce025feef390" />
     </td>
     <td align="center">
-            <img width="400" height="400" alt="TopView2" src="https://github.com/user-attachments/assets/bf69d51f-9bd5-4f98-b85e-48e76ffee91b" />
+            <img width="400" height="400" alt="TopView2" src="https://github.com/user-attachments/assets/8008ad27-0b55-4c6c-8107-a18cb68a4657" />
     </td>
  </tr>
 </table>
@@ -322,3 +324,6 @@ All of the park cells that are directly adjacent to each other, are connected in
 
 
 ## Final Results:
+
+<img width="1236" height="847" alt="SideViewComplete" src="https://github.com/user-attachments/assets/58ac6a82-3dad-4680-90ea-730b3572d9d5" />
+
